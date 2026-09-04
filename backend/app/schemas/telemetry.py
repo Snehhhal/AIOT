@@ -15,8 +15,8 @@ class TelemetryIn(BaseModel):
     vibration_g: float = Field(default=0.0, ge=0.0, le=20.0, description="Vibration amplitude in g")
     temperature_c: float = Field(default=25.0, ge=-40.0, le=85.0, description="Enclosure temperature in Celsius")
     humidity_pct: float = Field(default=50.0, ge=0.0, le=100.0, description="Relative humidity %")
-    rain_detected: bool = Field(default=false, description="Rain / moisture sensor flag")
-    is_simulated: bool = Field(default=false, description="Flag indicating if reading originates from simulation")
+    rain_detected: bool = Field(default=False, description="Rain / moisture sensor flag")
+    is_simulated: bool = Field(default=False, description="Flag indicating if reading originates from simulation")
     recorded_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
