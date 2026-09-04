@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: poleguard-backend:latest
+    container_name: poleguard_api_engine
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=PoleGuard
+      - APP_ENV=production
+      - DEBUG=false
+      - DATABASE_URL=sqlite+aiosqlite:///./data/safety_platform.db
+      - JWT_SECRET_KEY=poleguard-production-secret-key-capstone-2026
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      - CORS_ORIGINS=["*"]
+      - SIMULATION_MODE=true
+      - RAG_PERSIST_DIR=/app/data/chroma
+    volumes:
+      - poleguard_data:/app/data
+      - poleguard_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  poleguard_data:
+    name: poleguard_data
+  poleguard_uploads:
+    name: poleguard_uploads

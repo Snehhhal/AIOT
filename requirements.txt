@@ -1,0 +1,26 @@
+# PoleGuard - Root Dependencies for Backend, AI Decision Engine, and RAG Assistant
+fastapi>=0.111.0,<0.142.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0,<3.0.0
+pydantic-settings>=2.3.0
+sqlalchemy>=2.0.30
+aiosqlite>=0.20.0
+python-multipart>=0.0.9
+email-validator>=2.0.0
+httpx>=0.27.0
+websockets>=12.0
+pytest>=8.2.0
+pytest-asyncio>=0.23.0
+
+# AI/ML & Tabular Classifier
+scikit-learn>=1.5.0
+joblib>=1.4.0
+numpy>=1.26.0
+pandas>=2.2.0
+scipy>=1.13.0
+
+# Computer Vision & Image Processing
+pillow>=10.3.0
+
+# RAG & Vector Embeddings
+chromadb>=0.5.0
