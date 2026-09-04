@@ -28,7 +28,10 @@
 
     <!-- Role Switcher & Offline Simulation Ribbon -->
     <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
-      <button onclick="switchRole('CITIZEN')" id="btn-CITIZEN" class="role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white shadow-lg shadow-emerald-900/30">
+      <button onclick="handleLogout()" id="btn-AUTH" class="role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-900/30">
+        🔑 Login / Sign Up
+      </button>
+      <button onclick="switchRole('CITIZEN')" id="btn-CITIZEN" class="role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">
         👤 Citizen
       </button>
       <button onclick="switchRole('TECHNICIAN')" id="btn-TECHNICIAN" class="role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">
@@ -80,7 +83,10 @@
           </h2>
           <p id="appbar-subtitle" class="text-[10px] text-slate-400">Sector 4 • Safe Neighborhood Zone</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5">
+          <button id="btn-logout" onclick="handleLogout()" class="hidden px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition-all flex items-center gap-1">
+            <span>🚪</span> Logout
+          </button>
           <span id="badge-connectivity" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
             ONLINE
           </span>
@@ -102,7 +108,7 @@
       </div>
 
       <!-- Bottom Floating Action Navigation -->
-      <div class="absolute bottom-0 left-0 right-0 h-16 bg-slate-900/90 backdrop-blur-md border-t border-slate-800/80 px-4 flex items-center justify-around z-40 text-[10px] text-slate-400">
+      <div id="bottom-nav-bar" class="hidden absolute bottom-0 left-0 right-0 h-16 bg-slate-900/90 backdrop-blur-md border-t border-slate-800/80 px-4 flex items-center justify-around z-40 text-[10px] text-slate-400">
         <button onclick="renderRoleScreen()" class="flex flex-col items-center gap-1 text-cyan-400 font-bold">
           <span>🏠</span> Home
         </button>
@@ -112,8 +118,11 @@
         <button onclick="openReportsModal()" class="flex flex-col items-center gap-1 hover:text-white transition-colors">
           <span>📋</span> Reports
         </button>
+        <button onclick="handleLogout()" class="flex flex-col items-center gap-1 hover:text-rose-400 transition-colors">
+          <span>🚪</span> Logout
+        </button>
         <button onclick="switchRole('ADMIN')" class="flex flex-col items-center gap-1 hover:text-white transition-colors">
-          <span>⚙️</span> Demo Center
+          <span>⚙️</span> Demo
         </button>
       </div>
 
@@ -210,7 +219,14 @@
 
   <script>
     // System State
+    let isLoggedIn = false;
+    let authTab = 'signin';
     let currentRole = 'CITIZEN';
+    let currentUser = {
+      name: 'Rahul Sharma',
+      email: 'citizen@safety.org',
+      role: 'CITIZEN'
+    };
     let isOnline = true;
     let activeScenario = 'NORMAL';
     let activePole = 'P-001';
@@ -290,15 +306,93 @@
       }
     }
 
-    function switchRole(role) {
-      currentRole = role;
+    function updateRoleButtonHighlights(activeKey) {
       document.querySelectorAll('.role-btn').forEach(btn => {
         btn.className = 'role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700';
       });
-      const activeBtn = document.getElementById(`btn-${role}`);
+      const activeBtn = document.getElementById(`btn-${activeKey}`);
       if (activeBtn) {
-        activeBtn.className = 'role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-cyan-600 text-white shadow-lg shadow-cyan-900/30';
+        if (activeKey === 'AUTH') {
+          activeBtn.className = 'role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-900/30';
+        } else {
+          activeBtn.className = 'role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-cyan-600 text-white shadow-lg shadow-cyan-900/30';
+        }
       }
+    }
+
+    function switchAuthTab(tab) {
+      authTab = tab;
+      renderAuthScreen();
+    }
+
+    function quickLogin(role, name, email) {
+      currentRole = role;
+      currentUser = { name, email, role };
+      isLoggedIn = true;
+      updateRoleButtonHighlights(role);
+      showAuthSuccessNotice(`Signed in as ${name} (${role})`);
+      renderRoleScreen();
+    }
+
+    function submitLogin() {
+      const emailInput = document.getElementById('input-login-email');
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : 'citizen@safety.org';
+      
+      let role = 'CITIZEN';
+      let name = 'Rahul Sharma';
+      if (email.includes('tech') || email.includes('lineman')) {
+        role = 'TECHNICIAN';
+        name = 'Kailas Jadhav (Lineman #14)';
+      } else if (email.includes('eng') || email.includes('super')) {
+        role = 'ENGINEER';
+        name = 'Er. Snehal Chavan';
+      } else if (email.includes('auth') || email.includes('comm')) {
+        role = 'AUTHORITY';
+        name = 'Commissioner Office';
+      } else if (email.includes('admin') || email.includes('root')) {
+        role = 'ADMIN';
+        name = 'Platform Administrator';
+      }
+
+      quickLogin(role, name, email);
+    }
+
+    function submitSignUp() {
+      const nameInput = document.getElementById('input-signup-name');
+      const emailInput = document.getElementById('input-signup-email');
+      const roleSelect = document.getElementById('input-signup-role');
+
+      const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : 'New Registered User';
+      const email = emailInput && emailInput.value.trim() ? emailInput.value.trim() : 'user@safety.org';
+      const role = roleSelect ? roleSelect.value : 'CITIZEN';
+
+      quickLogin(role, name, email);
+    }
+
+    function handleLogout() {
+      isLoggedIn = false;
+      updateRoleButtonHighlights('AUTH');
+      renderRoleScreen();
+    }
+
+    function showAuthSuccessNotice(msg) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-6 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-2xl bg-emerald-500 text-slate-950 font-bold text-xs shadow-2xl flex items-center gap-2 animate-bounce';
+      toast.innerHTML = `<span>✓</span> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+    }
+
+    function switchRole(role) {
+      currentRole = role;
+      isLoggedIn = true;
+      if (role === 'CITIZEN') currentUser = { name: 'Rahul Sharma', email: 'citizen@safety.org', role: 'CITIZEN' };
+      else if (role === 'TECHNICIAN') currentUser = { name: 'Kailas Jadhav (Lineman #14)', email: 'technician@safety.org', role: 'TECHNICIAN' };
+      else if (role === 'ENGINEER') currentUser = { name: 'Er. Snehal Chavan', email: 'engineer@safety.org', role: 'ENGINEER' };
+      else if (role === 'AUTHORITY') currentUser = { name: 'Commissioner Office', email: 'authority@safety.org', role: 'AUTHORITY' };
+      else if (role === 'ADMIN') currentUser = { name: 'Platform Administrator', email: 'admin@safety.org', role: 'ADMIN' };
+      
+      updateRoleButtonHighlights(role);
       renderRoleScreen();
     }
 
@@ -349,11 +443,182 @@
       renderRoleScreen();
     }
 
+    function renderAuthScreen() {
+      const title = document.getElementById('appbar-title');
+      const subtitle = document.getElementById('appbar-subtitle');
+      const avatar = document.getElementById('user-avatar');
+      const container = document.getElementById('screen-content');
+      const logoutBtn = document.getElementById('btn-logout');
+      const badge = document.getElementById('badge-connectivity');
+
+      if (logoutBtn) logoutBtn.classList.add('hidden');
+      if (badge) {
+        badge.innerText = 'AUTH';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30';
+      }
+
+      title.innerHTML = `<span>⚡</span> PoleGuard Portal`;
+      subtitle.innerText = `Sign In or Create Account`;
+      avatar.innerText = '🔒';
+      avatar.className = 'w-7 h-7 rounded-full bg-slate-800 text-slate-300 font-bold flex items-center justify-center text-xs shadow border border-slate-700';
+
+      container.innerHTML = `
+        <div class="space-y-3 pt-1">
+          <!-- Logo & Header -->
+          <div class="text-center">
+            <div class="w-14 h-14 rounded-2xl mx-auto bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-2xl mb-2 shadow-lg shadow-cyan-900/40 text-white">
+              ⚡
+            </div>
+            <h2 class="text-base font-extrabold text-white tracking-tight">PoleGuard Safety Portal</h2>
+            <p class="text-[10px] text-slate-400">AI & IoT Electric Pole Leakage Detection and Life Safety</p>
+          </div>
+
+          <!-- Auth Tab Switcher -->
+          <div class="flex bg-slate-900 border border-slate-800 rounded-xl p-1 text-xs font-bold">
+            <button onclick="switchAuthTab('signin')" class="flex-1 py-1.5 rounded-lg transition-all ${authTab === 'signin' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
+              Sign In
+            </button>
+            <button onclick="switchAuthTab('signup')" class="flex-1 py-1.5 rounded-lg transition-all ${authTab === 'signup' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
+              Create Account
+            </button>
+          </div>
+
+          ${authTab === 'signin' ? `
+            <!-- Sign In Form -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 space-y-2">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-0.5">Email Address</label>
+                <input id="input-login-email" type="email" value="citizen@safety.org" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-0.5">Password</label>
+                <input id="input-login-pass" type="password" value="password123" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono">
+              </div>
+              <button onclick="submitLogin()" class="w-full mt-1 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 font-extrabold text-xs text-slate-950 shadow-lg shadow-cyan-500/20 transition-all flex items-center justify-center gap-1.5">
+                <span>🔐</span> Sign In to Safety Portal
+              </button>
+            </div>
+          ` : `
+            <!-- Create Account Form -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 space-y-2">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-0.5">Full Name</label>
+                <input id="input-signup-name" type="text" placeholder="e.g. Rahul Sharma" value="New Citizen User" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-0.5">Email Address</label>
+                <input id="input-signup-email" type="email" placeholder="user@domain.com" value="user@discom.org" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-0.5">Role Type</label>
+                <select id="input-signup-role" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400">
+                  <option value="CITIZEN">👤 Citizen (Public Safety & SOS)</option>
+                  <option value="TECHNICIAN">⚡ Field Technician (Lineman)</option>
+                  <option value="ENGINEER">🛠️ Distribution Engineer</option>
+                  <option value="AUTHORITY">🏛️ Municipal Disaster Authority</option>
+                </select>
+              </div>
+              <button onclick="submitSignUp()" class="w-full mt-1 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 font-extrabold text-xs text-slate-950 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5">
+                <span>✨</span> Create Account & Launch
+              </button>
+            </div>
+          `}
+
+          <!-- 1-Tap Quick Demo Role Logins (Matching Flutter LoginScreen) -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-amber-400 flex items-center gap-1">
+                <span>⚡</span> 1-Tap Demo Role Login
+              </span>
+              <span class="text-[9px] text-slate-400 font-medium">Viva Demo Mode</span>
+            </div>
+            <p class="text-[10px] text-slate-400">Tap any persona to immediately enter that role's dynamic dashboard:</p>
+
+            <div class="space-y-1.5 pt-1">
+              <div onclick="quickLogin('CITIZEN', 'Rahul Sharma', 'citizen@safety.org')" class="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 cursor-pointer flex items-center justify-between transition-all">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">👤</span>
+                  <div>
+                    <p class="text-xs font-bold text-emerald-400">Citizen • Rahul Sharma</p>
+                    <p class="text-[9px] text-slate-400">Green/Red Status, SOS Hazard Report with Photo</p>
+                  </div>
+                </div>
+                <span class="text-xs text-emerald-400 font-bold">→</span>
+              </div>
+
+              <div onclick="quickLogin('TECHNICIAN', 'Kailas Jadhav (Lineman #14)', 'technician@safety.org')" class="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 cursor-pointer flex items-center justify-between transition-all">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">⚡</span>
+                  <div>
+                    <p class="text-xs font-bold text-amber-400">Field Technician • Kailas Jadhav</p>
+                    <p class="text-[9px] text-slate-400">Work Orders, Isolation SOPs, Live Sensor Trends</p>
+                  </div>
+                </div>
+                <span class="text-xs text-amber-400 font-bold">→</span>
+              </div>
+
+              <div onclick="quickLogin('ENGINEER', 'Er. Snehal Chavan', 'engineer@safety.org')" class="p-2 rounded-xl bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20 cursor-pointer flex items-center justify-between transition-all">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">🛠️</span>
+                  <div>
+                    <p class="text-xs font-bold text-blue-400">Distribution Engineer • Er. Snehal</p>
+                    <p class="text-[9px] text-slate-400">Fleet Reliability (91.4%), AI Anomaly Diagnostics</p>
+                  </div>
+                </div>
+                <span class="text-xs text-blue-400 font-bold">→</span>
+              </div>
+
+              <div onclick="quickLogin('AUTHORITY', 'Commissioner Office', 'authority@safety.org')" class="p-2 rounded-xl bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 cursor-pointer flex items-center justify-between transition-all">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">🏛️</span>
+                  <div>
+                    <p class="text-xs font-bold text-purple-400">Municipal Authority • Commissioner</p>
+                    <p class="text-[9px] text-slate-400">Metro Safety Index, Emergency Grid Cutoff Order</p>
+                  </div>
+                </div>
+                <span class="text-xs text-purple-400 font-bold">→</span>
+              </div>
+
+              <div onclick="quickLogin('ADMIN', 'Platform Administrator', 'admin@safety.org')" class="p-2 rounded-xl bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 cursor-pointer flex items-center justify-between transition-all">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">⚙️</span>
+                  <div>
+                    <p class="text-xs font-bold text-rose-400">System Admin • Root</p>
+                    <p class="text-[9px] text-slate-400">Judge Demo Control Center, Live Fault Injections</p>
+                  </div>
+                </div>
+                <span class="text-xs text-rose-400 font-bold">→</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function renderRoleScreen() {
       const title = document.getElementById('appbar-title');
       const subtitle = document.getElementById('appbar-subtitle');
       const avatar = document.getElementById('user-avatar');
       const container = document.getElementById('screen-content');
+      const logoutBtn = document.getElementById('btn-logout');
+      const bottomNav = document.getElementById('bottom-nav-bar');
+      const badge = document.getElementById('badge-connectivity');
+
+      if (!isLoggedIn) {
+        if (bottomNav) bottomNav.classList.add('hidden');
+        renderAuthScreen();
+        return;
+      }
+
+      if (bottomNav) bottomNav.classList.remove('hidden');
+      if (logoutBtn) logoutBtn.classList.remove('hidden');
+      if (badge) {
+        badge.innerText = isOnline ? 'ONLINE' : 'OFFLINE';
+        badge.className = isOnline 
+          ? 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+          : 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+      }
+
       const pole = telemetryData[activePole];
 
       // ----------------------------------------------------------------------
