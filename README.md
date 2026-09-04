@@ -15,6 +15,21 @@
 
 ---
 
+## ⚡ Instant 1-Click Launch in ANY Workspace
+
+Anyone (examiners, professors, classmates, or developers) can clone and run PoleGuard immediately on **ANY computer** (Windows, Mac, Linux, or Mobile Phone):
+
+### Option 1: Live Interactive Mobile App (Zero Installation Needed)
+* Simply open [`index.html`](index.html) or [`app_preview.html`](app_preview.html) in any web browser (Chrome, Edge, Safari, Firefox).
+* Runs the complete 5-role mobile application with interactive sensor charts, emergency fault triggers, and the RAG safety assistant!
+
+### Option 2: 1-Click Full-Stack Launcher (FastAPI Backend + Mobile App)
+* **On Windows**: Double-click [`run.bat`](run.bat) (automatically configures Python venv, starts FastAPI backend on `http://localhost:8000`, and launches the mobile app in your browser).
+* **On macOS / Linux**: Run `./run.sh` in your terminal.
+* **Via Docker**: Run `docker compose up --build`
+
+---
+
 ## 1. Executive Summary & Problem Statement
 
 Urban and rural electrical distribution networks frequently suffer from broken neutral conductors, cracked porcelain insulators, degraded grounding electrodes, and physical pole impact. During heavy monsoons or tropical cyclones, rainwater transforms streets and sidewalks into conductive paths. When an electrical pole becomes energized through insulation leakage, lethal surface gradient voltages (step and touch potentials) are established in the surrounding waterlogged soil.

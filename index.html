@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PoleGuard — AI & IoT Life Safety Mobile App Preview</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    .animate-spin-slow { animation: spin 8s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased p-3 md:p-6 flex flex-col items-center min-h-screen">
+
+  <!-- Header & Guidance -->
+  <div class="max-w-5xl w-full text-center mb-4">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold mb-2">
+      <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+      PoleGuard Unified Flutter Mobile App • 5 Roles • Live RBAC
+    </div>
+    <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-1">
+      PoleGuard Mobile Application Preview
+    </h1>
+    <p class="text-xs text-slate-400 max-w-2xl mx-auto">
+      Experience the single Flutter mobile application with Dynamic Role-Based Access Control (RBAC). Switch roles below or trigger live fault scenarios from the Judge Demo Center.
+    </p>
+
+    <!-- Role Switcher & Offline Simulation Ribbon -->
+    <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
+      <button onclick="switchRole('CITIZEN')" id="btn-CITIZEN" class="role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white shadow-lg shadow-emerald-900/30">
+        👤 Citizen
+      </button>
+      <button onclick="switchRole('TECHNICIAN')" id="btn-TECHNICIAN" class="role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">
+        ⚡ Technician
+      </button>
+      <button onclick="switchRole('ENGINEER')" id="btn-ENGINEER" class="role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">
+        🛠️ Engineer
+      </button>
+      <button onclick="switchRole('AUTHORITY')" id="btn-AUTHORITY" class="role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">
+        🏛️ Authority
+      </button>
+      <button onclick="switchRole('ADMIN')" id="btn-ADMIN" class="role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">
+        ⚙️ Admin (Demo Center)
+      </button>
+      
+      <!-- Network Toggle -->
+      <button onclick="toggleNetwork()" id="btn-network" class="ml-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-emerald-400 border border-emerald-500/40 hover:bg-slate-700">
+        📶 Network: ONLINE
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Device Chassis Simulator -->
+  <div class="relative w-[390px] h-[820px] bg-slate-900 rounded-[50px] p-3.5 border-[6px] border-slate-700 shadow-2xl shadow-cyan-950/40 flex flex-col overflow-hidden">
+    
+    <!-- Phone Notch / Dynamic Island -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-950 rounded-b-2xl z-50 flex items-center justify-center">
+      <div class="w-10 h-1 bg-slate-700 rounded-full"></div>
+      <div class="w-2.5 h-2.5 bg-slate-800 rounded-full ml-3"></div>
+    </div>
+
+    <!-- Screen Area -->
+    <div class="flex-1 bg-slate-950 rounded-[38px] overflow-hidden flex flex-col relative pt-6 text-slate-100">
+
+      <!-- Status Bar -->
+      <div class="px-6 py-1 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+        <span id="live-clock">09:41</span>
+        <div class="flex items-center gap-1.5">
+          <span id="signal-icon">5G</span>
+          <span>100%</span>
+        </div>
+      </div>
+
+      <!-- App Top Bar -->
+      <div class="px-4 py-2.5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/60 backdrop-blur-md">
+        <div>
+          <h2 id="appbar-title" class="font-extrabold text-sm tracking-wide flex items-center gap-2 text-white">
+            <span>🛡️</span> PoleGuard Citizen
+          </h2>
+          <p id="appbar-subtitle" class="text-[10px] text-slate-400">Sector 4 • Safe Neighborhood Zone</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="badge-connectivity" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            ONLINE
+          </span>
+          <div id="user-avatar" class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs shadow">
+            C
+          </div>
+        </div>
+      </div>
+
+      <!-- Offline Warning Banner (conditional) -->
+      <div id="offline-banner" class="hidden px-4 py-1.5 bg-amber-500/20 border-b border-amber-500/30 text-amber-300 text-[10px] flex items-center justify-between font-semibold">
+        <span>⚠️ Offline Mode — Showing Cached Telemetry</span>
+        <span class="text-[9px] bg-amber-500/30 px-1.5 py-0.2 rounded">Queue: 2</span>
+      </div>
+
+      <!-- Dynamic Screen Content Area -->
+      <div id="screen-content" class="flex-1 overflow-y-auto p-4 space-y-3.5 pb-20">
+        <!-- Injected via JavaScript based on role and active scenario -->
+      </div>
+
+      <!-- Bottom Floating Action Navigation -->
+      <div class="absolute bottom-0 left-0 right-0 h-16 bg-slate-900/90 backdrop-blur-md border-t border-slate-800/80 px-4 flex items-center justify-around z-40 text-[10px] text-slate-400">
+        <button onclick="renderRoleScreen()" class="flex flex-col items-center gap-1 text-cyan-400 font-bold">
+          <span>🏠</span> Home
+        </button>
+        <button onclick="openRAGModal()" class="flex flex-col items-center gap-1 hover:text-white transition-colors">
+          <span>🤖</span> Safety RAG
+        </button>
+        <button onclick="openReportsModal()" class="flex flex-col items-center gap-1 hover:text-white transition-colors">
+          <span>📋</span> Reports
+        </button>
+        <button onclick="switchRole('ADMIN')" class="flex flex-col items-center gap-1 hover:text-white transition-colors">
+          <span>⚙️</span> Demo Center
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Safety & Academic Viva Note -->
+  <div class="max-w-md w-full text-center mt-3 text-[11px] text-slate-500">
+    🔒 <span class="font-bold text-slate-400">Engineering Prototype Notice:</span> All relay cutoffs and grid isolations are low-voltage software simulations. Never connects to live mains AC.
+  </div>
+
+  <!-- MODAL: RAG Safety Assistant Chatbot -->
+  <div id="modal-rag" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-5 shadow-2xl flex flex-col h-[520px]">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🤖</span>
+          <div>
+            <h3 class="font-bold text-sm text-white">Statutory Safety RAG Assistant</h3>
+            <p class="text-[10px] text-cyan-400">CEA Safety Regs 2010 • Monsoon SOP</p>
+          </div>
+        </div>
+        <button onclick="closeRAGModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+      
+      <!-- Chat history -->
+      <div id="rag-messages" class="flex-1 overflow-y-auto py-3 space-y-2.5 text-xs">
+        <div class="bg-slate-800/80 p-3 rounded-2xl rounded-tl-sm text-slate-200 border border-slate-700/60">
+          <p class="font-semibold text-cyan-300 mb-1">Namaste! I am your PoleGuard Safety Assistant.</p>
+          <p>I provide statutory advice from Central Electricity Authority (CEA) Regulations 2010 and Lineman Monsoon SOPs. How can I assist with pole safety today?</p>
+        </div>
+      </div>
+
+      <!-- Quick prompts -->
+      <div class="flex gap-1.5 overflow-x-auto py-2 text-[10px]">
+        <button onclick="sendQuickQuery('What is the Safe Shuffle Technique for waterlogged poles?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700">
+          🌊 Safe Shuffle Technique
+        </button>
+        <button onclick="sendQuickQuery('What mandatory PPE is required for 35mA leakage inspection?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700">
+          🧤 Mandatory PPE List
+        </button>
+      </div>
+
+      <!-- Chat input -->
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <input id="rag-input" type="text" placeholder="Ask about step-potential, de-energization..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400">
+        <button onclick="submitRAGQuery()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-xl text-xs font-bold text-white">
+          Ask
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Citizen Hazard Report Form -->
+  <div id="modal-report" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 shadow-2xl space-y-3">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+        <h3 class="font-bold text-sm text-white flex items-center gap-1.5">
+          <span>⚠️</span> Report Electric Pole Hazard
+        </h3>
+        <button onclick="closeReportsModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div>
+        <label class="text-[11px] text-slate-400 font-medium">Nearest Pole Identifier</label>
+        <input id="report-pole-id" type="text" value="P-001" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+      </div>
+
+      <div>
+        <label class="text-[11px] text-slate-400 font-medium">Hazard Category</label>
+        <select id="report-category" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+          <option>Sparking or Smoke from Insulator</option>
+          <option>Leaning / Damaged Pole Structure</option>
+          <option>Loose Sagging Wire / Cable Down</option>
+          <option>Waterlogging Puddle Around Base</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-[11px] text-slate-400 font-medium">Description / Landmark</label>
+        <textarea id="report-desc" rows="2" placeholder="Describe what you see near the pole..." class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"></textarea>
+      </div>
+
+      <div>
+        <label class="text-[11px] text-slate-400 font-medium">Contact Phone (Optional)</label>
+        <input id="report-phone" type="text" placeholder="+91 98XXXXXXXX" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+      </div>
+
+      <button onclick="submitCitizenReport()" class="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-900/30">
+        Submit Hazard Report & Alert Municipal Crew
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // System State
+    let currentRole = 'CITIZEN';
+    let isOnline = true;
+    let activeScenario = 'NORMAL';
+    let activePole = 'P-001';
+    let workOrderStatus = 'ASSIGNED'; // ASSIGNED, ACKNOWLEDGED, IN_PROGRESS, RESOLVED
+    let workOrderNotes = 'Initial automated dispatch via AI & IoT alert.';
+
+    // Sensor State Data
+    const telemetryData = {
+      'P-001': {
+        name: 'Gandhi Square Commercial',
+        leakage_ma: 1.8,
+        voltage_v: 1.2,
+        tilt_deg: 0.3,
+        temp_c: 28.0,
+        rain: false,
+        risk_score: 8,
+        risk_tier: 'NORMAL',
+        pedestrian_dist: null,
+        status: 'HEALTHY'
+      },
+      'P-002': {
+        name: 'FC Road Junction North',
+        leakage_ma: 16.5,
+        voltage_v: 18.0,
+        tilt_deg: 1.1,
+        temp_c: 31.0,
+        rain: false,
+        risk_score: 38,
+        risk_tier: 'WARNING',
+        pedestrian_dist: null,
+        status: 'WARNING'
+      },
+      'P-003': {
+        name: 'University Circle - West Gate',
+        leakage_ma: 35.5,
+        voltage_v: 62.0,
+        tilt_deg: 2.0,
+        temp_c: 24.0,
+        rain: true,
+        risk_score: 88,
+        risk_tier: 'CRITICAL',
+        pedestrian_dist: null,
+        status: 'CRITICAL'
+      },
+      'P-004': {
+        name: 'Industrial Zone Subfeeder 2',
+        leakage_ma: 48.0,
+        voltage_v: 85.0,
+        tilt_deg: 21.5,
+        temp_c: 27.0,
+        rain: true,
+        risk_score: 98,
+        risk_tier: 'EMERGENCY',
+        pedestrian_dist: 1.4,
+        status: 'CRITICAL'
+      }
+    };
+
+    function toggleNetwork() {
+      isOnline = !isOnline;
+      const btn = document.getElementById('btn-network');
+      const badge = document.getElementById('badge-connectivity');
+      const banner = document.getElementById('offline-banner');
+
+      if (isOnline) {
+        btn.innerText = '📶 Network: ONLINE';
+        btn.className = 'ml-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-emerald-400 border border-emerald-500/40 hover:bg-slate-700';
+        badge.innerText = 'ONLINE';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        banner.classList.add('hidden');
+      } else {
+        btn.innerText = '⚠️ Network: OFFLINE';
+        btn.className = 'ml-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-500/20 text-amber-300 border border-amber-500/50 hover:bg-amber-500/30';
+        badge.innerText = 'OFFLINE';
+        badge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        banner.classList.remove('hidden');
+      }
+    }
+
+    function switchRole(role) {
+      currentRole = role;
+      document.querySelectorAll('.role-btn').forEach(btn => {
+        btn.className = 'role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700';
+      });
+      const activeBtn = document.getElementById(`btn-${role}`);
+      if (activeBtn) {
+        activeBtn.className = 'role-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-cyan-600 text-white shadow-lg shadow-cyan-900/30';
+      }
+      renderRoleScreen();
+    }
+
+    function injectScenario(scenario) {
+      activeScenario = scenario;
+      if (scenario === 'NORMAL') {
+        telemetryData['P-001'].leakage_ma = 1.8;
+        telemetryData['P-001'].voltage_v = 1.2;
+        telemetryData['P-001'].tilt_deg = 0.3;
+        telemetryData['P-001'].rain = false;
+        telemetryData['P-001'].risk_score = 8;
+        telemetryData['P-001'].risk_tier = 'NORMAL';
+        telemetryData['P-001'].pedestrian_dist = null;
+        telemetryData['P-001'].status = 'HEALTHY';
+        activePole = 'P-001';
+      } else if (scenario === 'WARNING') {
+        telemetryData['P-002'].leakage_ma = 16.5;
+        telemetryData['P-002'].voltage_v = 18.0;
+        telemetryData['P-002'].rain = false;
+        telemetryData['P-002'].risk_score = 38;
+        telemetryData['P-002'].risk_tier = 'WARNING';
+        activePole = 'P-002';
+      } else if (scenario === 'CRITICAL_MONSOON') {
+        telemetryData['P-003'].leakage_ma = 35.5;
+        telemetryData['P-003'].voltage_v = 62.0;
+        telemetryData['P-003'].rain = true;
+        telemetryData['P-003'].risk_score = 88;
+        telemetryData['P-003'].risk_tier = 'CRITICAL';
+        activePole = 'P-003';
+      } else if (scenario === 'EMERGENCY_DUAL') {
+        telemetryData['P-004'].leakage_ma = 48.0;
+        telemetryData['P-004'].voltage_v = 85.0;
+        telemetryData['P-004'].tilt_deg = 21.5;
+        telemetryData['P-004'].rain = true;
+        telemetryData['P-004'].risk_score = 98;
+        telemetryData['P-004'].risk_tier = 'EMERGENCY';
+        activePole = 'P-004';
+      } else if (scenario === 'CV_PEDESTRIAN_HAZARD') {
+        telemetryData['P-001'].leakage_ma = 26.0;
+        telemetryData['P-001'].voltage_v = 42.0;
+        telemetryData['P-001'].rain = true;
+        telemetryData['P-001'].risk_score = 98;
+        telemetryData['P-001'].risk_tier = 'CRITICAL';
+        telemetryData['P-001'].pedestrian_dist = 1.4;
+        telemetryData['P-001'].status = 'CRITICAL';
+        activePole = 'P-001';
+      }
+      renderRoleScreen();
+    }
+
+    function renderRoleScreen() {
+      const title = document.getElementById('appbar-title');
+      const subtitle = document.getElementById('appbar-subtitle');
+      const avatar = document.getElementById('user-avatar');
+      const container = document.getElementById('screen-content');
+      const pole = telemetryData[activePole];
+
+      // ----------------------------------------------------------------------
+      // 1. CITIZEN ROLE SCREEN
+      // ----------------------------------------------------------------------
+      if (currentRole === 'CITIZEN') {
+        title.innerHTML = `<span>🛡️</span> PoleGuard Citizen`;
+        subtitle.innerText = `Sector 4 • GPS Locked`;
+        avatar.innerText = 'C';
+        avatar.className = 'w-7 h-7 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs shadow';
+
+        const isSafe = pole.risk_tier === 'NORMAL';
+        const badgeColor = isSafe ? 'emerald' : (pole.risk_tier === 'WARNING' ? 'amber' : 'rose');
+        const statusText = isSafe ? 'NORMAL — Safe' : (pole.risk_tier === 'WARNING' ? 'WARNING — Attention' : 'CRITICAL — Hazardous');
+
+        container.innerHTML = `
+          <!-- Main Safety Hero Card -->
+          <div class="bg-gradient-to-b from-slate-900 to-slate-900/90 border border-slate-800 rounded-3xl p-4 text-center shadow-xl">
+            <div class="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-3 bg-${badgeColor}-500/15 border-2 border-${badgeColor}-500/40">
+              <span class="text-3xl">${isSafe ? '🛡️' : '⚠️'}</span>
+            </div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-${badgeColor}-500/20 border border-${badgeColor}-500/40 text-${badgeColor}-400 text-xs font-extrabold mb-1">
+              <span>●</span> ${statusText}
+            </div>
+            <h3 class="text-sm font-bold text-white mt-2">Nearest Pole: ${activePole}</h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Approx. 4.2m away • ${pole.name}</p>
+
+            ${pole.rain ? `
+              <div class="mt-3 p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-[10px] text-cyan-300 text-left flex items-start gap-2">
+                <span>🌧️</span>
+                <div>
+                  <p class="font-bold">Wet Ground Advisory Active</p>
+                  <p class="text-slate-300">Standing water increases touch potential. Do not step into puddles near the pole base.</p>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <button onclick="openReportsModal()" class="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-left transition-all">
+              <div class="text-lg mb-1">📸</div>
+              <p class="font-bold text-xs text-white">Report Hazard</p>
+              <p class="text-[10px] text-slate-400">Sparking, wire down, tilt</p>
+            </button>
+            <button onclick="openRAGModal()" class="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-left transition-all">
+              <div class="text-lg mb-1">💬</div>
+              <p class="font-bold text-xs text-white">Safety Chatbot</p>
+              <p class="text-[10px] text-slate-400">CEA Rules & SOP guidance</p>
+            </button>
+          </div>
+
+          <!-- Emergency SOS Dispatch -->
+          <button onclick="triggerCitizenSOS()" class="w-full py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 font-extrabold text-xs text-white shadow-lg shadow-rose-900/40 flex items-center justify-center gap-2">
+            <span>🚨</span> Emergency SOS (Alert MSEDCL Discom)
+          </button>
+        `;
+      }
+
+      // ----------------------------------------------------------------------
+      // 2. TECHNICIAN ROLE SCREEN
+      // ----------------------------------------------------------------------
+      else if (currentRole === 'TECHNICIAN') {
+        title.innerHTML = `<span>⚡</span> Field Technician Portal`;
+        subtitle.innerText = `Lineman #14 • Sub-Station Sector 4`;
+        avatar.innerText = 'T';
+        avatar.className = 'w-7 h-7 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-xs shadow';
+
+        container.innerHTML = `
+          <!-- Pole Selector Chips -->
+          <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px]">
+            ${['P-001', 'P-002', 'P-003', 'P-004'].map(pId => `
+              <button onclick="selectPole('${pId}')" class="px-3 py-1 rounded-lg font-bold border transition-all ${activePole === pId ? 'bg-cyan-600 border-cyan-400 text-white' : 'bg-slate-900 border-slate-800 text-slate-400'}">
+                ${pId}
+              </button>
+            `).join('')}
+          </div>
+
+          <!-- Live Telemetry Matrix -->
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 text-center">
+              <span class="text-[10px] text-slate-400">Leakage</span>
+              <p class="text-sm font-extrabold ${pole.leakage_ma >= 30 ? 'text-rose-400' : 'text-emerald-400'}">${pole.leakage_ma.toFixed(1)} <span class="text-[9px]">mA</span></p>
+              <span class="text-[8px] text-slate-500">IEC Limit: 30mA</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 text-center">
+              <span class="text-[10px] text-slate-400">Touch Volts</span>
+              <p class="text-sm font-extrabold ${pole.voltage_v >= 50 ? 'text-amber-400' : 'text-slate-200'}">${pole.voltage_v.toFixed(1)} <span class="text-[9px]">V</span></p>
+              <span class="text-[8px] text-slate-500">Safe: &lt;50V</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 text-center">
+              <span class="text-[10px] text-slate-400">Tilt Angle</span>
+              <p class="text-sm font-extrabold ${pole.tilt_deg >= 15 ? 'text-rose-400' : 'text-slate-200'}">${pole.tilt_deg.toFixed(1)}°</p>
+              <span class="text-[8px] text-slate-500">Max: 15.0°</span>
+            </div>
+          </div>
+
+          <!-- Custom Canvas Sensor Trend Chart -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-[11px] font-bold text-white flex items-center gap-1.5">
+                <span>📈</span> 24h Leakage Trend
+              </span>
+              <span class="text-[10px] text-rose-400 font-bold">--- 30mA Let-Go</span>
+            </div>
+            <canvas id="trendCanvas" width="320" height="90" class="w-full h-[90px] rounded bg-slate-950/60"></canvas>
+          </div>
+
+          <!-- Active Work Order Workflow Card -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-white">Work Order #WO-8410</span>
+              <span class="px-2 py-0.5 rounded text-[9px] font-extrabold ${workOrderStatus === 'RESOLVED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'}">
+                ${workOrderStatus}
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-300">Pole ${activePole}: ${pole.name}</p>
+            <div class="p-2 rounded bg-slate-950 border border-slate-800 text-[10px] text-slate-400">
+              <span class="font-bold text-slate-300">Notes:</span> ${workOrderNotes}
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button onclick="advanceWorkOrder('IN_PROGRESS')" class="py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-[10px]">
+                ⏳ Mark In-Progress
+              </button>
+              <button onclick="advanceWorkOrder('RESOLVED')" class="py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px]">
+                ✅ Complete & Resolve
+              </button>
+            </div>
+          </div>
+        `;
+
+        setTimeout(() => drawCanvasChart(pole.leakage_ma), 50);
+      }
+
+      // ----------------------------------------------------------------------
+      // 3. ENGINEER ROLE SCREEN
+      // ----------------------------------------------------------------------
+      else if (currentRole === 'ENGINEER') {
+        title.innerHTML = `<span>🛠️</span> Engineering Fleet Supervisor`;
+        subtitle.innerText = `Sub-Division Control • 4 Monitored Nodes`;
+        avatar.innerText = 'E';
+        avatar.className = 'w-7 h-7 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow';
+
+        container.innerHTML = `
+          <!-- Fleet Predictive Health Summary -->
+          <div class="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-2xl p-3">
+            <div class="flex justify-between items-center">
+              <div>
+                <span class="text-[10px] text-blue-300 font-bold uppercase tracking-wider">Fleet Reliability</span>
+                <h3 class="text-xl font-extrabold text-white">91.4%</h3>
+              </div>
+              <div class="text-right text-[10px] text-slate-300">
+                <p>Nodes: <span class="font-bold text-white">4 Active</span></p>
+                <p>Hazards: <span class="font-bold text-rose-400">1 Critical</span></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pole Risk Health Rankings -->
+          <div class="space-y-2">
+            <span class="text-xs font-bold text-slate-300">Priority Health Monitoring</span>
+            ${Object.keys(telemetryData).map(pId => {
+              const p = telemetryData[pId];
+              const isCrit = p.risk_tier === 'CRITICAL' || p.risk_tier === 'EMERGENCY';
+              return `
+                <div class="bg-slate-900 border ${isCrit ? 'border-rose-500/40' : 'border-slate-800'} rounded-2xl p-2.5 flex items-center justify-between">
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold text-xs text-white">${pId}</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded font-extrabold ${isCrit ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'}">${p.risk_tier}</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-0.5">${p.name}</p>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-xs font-extrabold ${isCrit ? 'text-rose-400' : 'text-white'}">CRI: ${p.risk_score}</span>
+                    <button onclick="selectPole('${pId}'); switchRole('TECHNICIAN');" class="block text-[9px] text-cyan-400 font-bold hover:underline mt-0.5">Inspect →</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- AI Model Anomaly Review -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-xs space-y-1.5">
+            <div class="flex justify-between font-bold text-slate-300">
+              <span>Random Forest Inference</span>
+              <span class="text-cyan-400 font-mono">Acc: 100.0%</span>
+            </div>
+            <p class="text-[10px] text-slate-400">Feature Weights: Voltage (22.2%), Leakage (21.5%), Vibration (21.1%), Tilt (20.7%).</p>
+          </div>
+        `;
+      }
+
+      // ----------------------------------------------------------------------
+      // 4. AUTHORITY ROLE SCREEN
+      // ----------------------------------------------------------------------
+      else if (currentRole === 'AUTHORITY') {
+        title.innerHTML = `<span>🏛️</span> Municipal Authority`;
+        subtitle.innerText = `Executive Dashboard • Emergency Escalations`;
+        avatar.innerText = 'M';
+        avatar.className = 'w-7 h-7 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center text-xs shadow';
+
+        container.innerHTML = `
+          <!-- Metro Safety Index -->
+          <div class="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-500/30 rounded-2xl p-3.5 flex justify-between items-center">
+            <div>
+              <span class="text-[10px] text-purple-300 font-bold uppercase tracking-wider">Metropolitan Safety Index</span>
+              <h3 class="text-2xl font-extrabold text-white">92.4 / 100</h3>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-lg">
+              🏛️
+            </div>
+          </div>
+
+          <!-- Active Escalation Warning -->
+          <div class="bg-rose-950/40 border border-rose-500/50 rounded-2xl p-3 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                Emergency Escalation #ESC-901
+              </span>
+              <span class="text-[10px] text-rose-400 font-mono">03m 12s pending</span>
+            </div>
+            <p class="text-[11px] text-slate-200">
+              Pole P-004: Severe structural tilt (21.5°) & high leakage (48mA). Immediate pedestrian perimeter clearance required.
+            </p>
+            <button onclick="executeGridCutoff('P-004')" class="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs shadow-lg shadow-rose-900/40">
+              ⚡ Order Remote Power Grid Cutoff
+            </button>
+          </div>
+
+          <!-- Zone Breakdown -->
+          <div class="space-y-1.5">
+            <span class="text-xs font-bold text-slate-300">Zone Distribution Health</span>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-2 flex justify-between text-xs">
+              <span class="text-slate-400">Sector 1 (Shivajinagar)</span>
+              <span class="font-bold text-emerald-400">100% Safe</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-2 flex justify-between text-xs">
+              <span class="text-slate-400">Sector 4 (University Rd)</span>
+              <span class="font-bold text-rose-400">CRITICAL</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // ----------------------------------------------------------------------
+      // 5. ADMIN ROLE SCREEN (JUDGE DEMO CONTROL CENTER)
+      // ----------------------------------------------------------------------
+      else if (currentRole === 'ADMIN') {
+        title.innerHTML = `<span>⚙️</span> Judge Demo Center (Admin)`;
+        subtitle.innerText = `1-Tap Scenario Injections for Viva Evaluation`;
+        avatar.innerText = 'A';
+        avatar.className = 'w-7 h-7 rounded-full bg-rose-600 text-white font-bold flex items-center justify-center text-xs shadow';
+
+        container.innerHTML = `
+          <!-- System Backend Status -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 text-[11px] space-y-1">
+            <div class="flex justify-between text-slate-400">
+              <span>FastAPI Backend:</span> <span class="text-emerald-400 font-bold font-mono">ONLINE (:8000)</span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+              <span>PostgreSQL/SQLite:</span> <span class="text-emerald-400 font-bold font-mono">CONNECTED</span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+              <span>AI Classifier:</span> <span class="text-cyan-400 font-bold font-mono">Random Forest (100% Acc)</span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+              <span>RAG Vector DB:</span> <span class="text-purple-400 font-bold font-mono">ChromaDB (14 Chunks)</span>
+            </div>
+          </div>
+
+          <!-- 1-Tap Evaluation Scenarios -->
+          <div class="space-y-2">
+            <span class="text-xs font-bold text-cyan-300">Trigger Evaluation Scenario</span>
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <button onclick="injectScenario('NORMAL')" class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-emerald-500 text-left font-bold">
+                🟢 A: Normal Safe
+                <p class="text-[9px] font-normal text-slate-400 mt-0.5">1.8mA, dry baseline</p>
+              </button>
+              <button onclick="injectScenario('WARNING')" class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-amber-500 text-left font-bold text-amber-300">
+                🟡 B: Leakage Warning
+                <p class="text-[9px] font-normal text-slate-400 mt-0.5">16.5mA, dry advisory</p>
+              </button>
+              <button onclick="injectScenario('CRITICAL_MONSOON')" class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-rose-500 text-left font-bold text-rose-300">
+                🌧️ C: Monsoon Leak
+                <p class="text-[9px] font-normal text-slate-400 mt-0.5">35.5mA in heavy rain</p>
+              </button>
+              <button onclick="injectScenario('EMERGENCY_DUAL')" class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-red-600 text-left font-bold text-red-400">
+                💥 D: Emergency Dual
+                <p class="text-[9px] font-normal text-slate-400 mt-0.5">48mA + 21.5° tilt</p>
+              </button>
+              <button onclick="injectScenario('CV_PEDESTRIAN_HAZARD')" class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-400 text-left font-bold text-cyan-300 col-span-2">
+                👁️ E: Vision Cross-Modal Hazard (1.4m Puddle)
+                <p class="text-[9px] font-normal text-slate-400 mt-0.5">Moderate leak + CV confirms pedestrian at 1.4m in puddle</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- Switch to Technician View to Inspect Live Changes -->
+          <button onclick="switchRole('TECHNICIAN')" class="w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-extrabold text-xs shadow-lg">
+            Switch to Technician Screen to View Gauges & Chart →
+          </button>
+        `;
+      }
+    }
+
+    function selectPole(poleId) {
+      activePole = poleId;
+      renderRoleScreen();
+    }
+
+    function advanceWorkOrder(newStatus) {
+      workOrderStatus = newStatus;
+      if (newStatus === 'IN_PROGRESS') {
+        workOrderNotes = 'Lineman arrived on site. High-voltage detector verified line status.';
+      } else if (newStatus === 'RESOLVED') {
+        workOrderNotes = 'Replaced cracked pin insulator. Earth pit resistance measured 2.8 ohms.';
+        telemetryData[activePole].leakage_ma = 1.6;
+        telemetryData[activePole].risk_score = 6;
+        telemetryData[activePole].risk_tier = 'NORMAL';
+      }
+      renderRoleScreen();
+    }
+
+    function executeGridCutoff(poleId) {
+      alert(`⚡ POWER GRID CUTOFF ORDER EXECUTED for ${poleId}.\nRemote circuit breaker opened via SCADA simulator.`);
+      telemetryData[poleId].status = 'OFFLINE';
+      telemetryData[poleId].voltage_v = 0.0;
+      telemetryData[poleId].leakage_ma = 0.0;
+      telemetryData[poleId].risk_score = 0;
+      telemetryData[poleId].risk_tier = 'NORMAL';
+      renderRoleScreen();
+    }
+
+    function triggerCitizenSOS() {
+      alert(`🚨 CITIZEN SOS BROADCAST DISPATCHED!\nEmergency ticket created for nearest pole ${activePole}. Municipal response team notified.`);
+    }
+
+    // Modal Handlers
+    function openRAGModal() {
+      document.getElementById('modal-rag').classList.remove('hidden');
+    }
+    function closeRAGModal() {
+      document.getElementById('modal-rag').classList.add('hidden');
+    }
+    function openReportsModal() {
+      document.getElementById('modal-report').classList.remove('hidden');
+    }
+    function closeReportsModal() {
+      document.getElementById('modal-report').classList.add('hidden');
+    }
+
+    function submitCitizenReport() {
+      const poleId = document.getElementById('report-pole-id').value;
+      const category = document.getElementById('report-category').value;
+      alert(`✅ HAZARD REPORT SUBMITTED!\nTicket #INC-CIT-${Math.floor(1000 + Math.random() * 9000)} registered for Pole ${poleId}.\nIssue: ${category}`);
+      closeReportsModal();
+    }
+
+    function sendQuickQuery(query) {
+      document.getElementById('rag-input').value = query;
+      submitRAGQuery();
+    }
+
+    function submitRAGQuery() {
+      const input = document.getElementById('rag-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const container = document.getElementById('rag-messages');
+      // Append user message
+      container.innerHTML += `
+        <div class="bg-cyan-950/40 border border-cyan-800/40 p-2.5 rounded-2xl rounded-tr-sm text-cyan-200 ml-6 text-right">
+          ${text}
+        </div>
+      `;
+      input.value = '';
+
+      // Generate statutory response
+      setTimeout(() => {
+        let answer = '';
+        if (text.toLowerCase().includes('shuffle') || text.toLowerCase().includes('water')) {
+          answer = `<b>Statutory Directive (Lineman Monsoon SOP):</b><br>
+          • <b>PROHIBITED:</b> Do not step directly into standing water puddles within 5.0m.<br>
+          • <b>Safe Shuffle Technique:</b> Keep feet touching together and shuffle slowly without lifting either foot from the earth to eliminate inter-pace potential gradients.<br>
+          • <i>Ref: Central Electricity Authority (Safety Requirements) Regs 2010, Reg. 19 & 43.</i>`;
+        } else if (text.toLowerCase().includes('ppe')) {
+          answer = `<b>Mandatory PPE Checklist (IS 4770 / ASTM D120):</b><br>
+          • Class 0 (1000V AC) Dielectric Gloves<br>
+          • 18kV Dielectric Safety Boots (EN 50321)<br>
+          • Type 1 Class E Helmet with Arc Flash Shield<br>
+          • Non-Contact AC Voltage Detector Stick`;
+        } else {
+          answer = `<b>Statutory Safety Protocol (CEA 2010):</b><br>
+          All maintenance requires upstream Lockout/Tagout (LOTO) and zero-voltage verification with a certified capacitive detector stick prior to physical contact.`;
+        }
+
+        container.innerHTML += `
+          <div class="bg-slate-800/90 border border-slate-700/60 p-3 rounded-2xl rounded-tl-sm text-slate-200">
+            ${answer}
+            <div class="mt-2 text-[10px] text-amber-400">
+              ⚠️ <b>Deterministic Guardrail:</b> Physical de-energization and hardware relay trips supersede digital advice.
+            </div>
+          </div>
+        `;
+        container.scrollTop = container.scrollHeight;
+      }, 300);
+    }
+
+    function drawCanvasChart(currentValue) {
+      const canvas = document.getElementById('trendCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Draw 30mA Danger Threshold Line
+      const dangerY = h * 0.40;
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, dangerY);
+      ctx.lineTo(w, dangerY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Generate 24 historical points
+      const points = [];
+      const numPoints = 24;
+      for (let i = 0; i < numPoints; i++) {
+        let val = 2.0 + Math.sin(i / 2) * 1.5;
+        if (i > 18 && currentValue > 20) {
+          val = 2.0 + (currentValue - 2.0) * ((i - 18) / (numPoints - 19));
+        } else if (i === numPoints - 1) {
+          val = currentValue;
+        }
+        points.push(val);
+      }
+
+      const maxVal = Math.max(60, currentValue * 1.2);
+      const coords = points.map((v, i) => ({
+        x: (i / (numPoints - 1)) * w,
+        y: h - (v / maxVal) * (h * 0.82) - 8
+      }));
+
+      // Gradient Fill
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, currentValue >= 30 ? 'rgba(239, 68, 68, 0.35)' : 'rgba(16, 185, 129, 0.25)');
+      grad.addColorStop(1, 'rgba(15, 23, 42, 0.0)');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(coords[0].x, h);
+      coords.forEach(c => ctx.lineTo(c.x, c.y));
+      ctx.lineTo(coords[coords.length - 1].x, h);
+      ctx.closePath();
+      ctx.fill();
+
+      // Line
+      ctx.strokeStyle = currentValue >= 30 ? '#ef4444' : '#10b981';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(coords[0].x, coords[0].y);
+      for (let i = 1; i < coords.length; i++) {
+        const xc = (coords[i].x + coords[i - 1].x) / 2;
+        const yc = (coords[i].y + coords[i - 1].y) / 2;
+        ctx.quadraticCurveTo(coords[i - 1].x, coords[i - 1].y, xc, yc);
+      }
+      ctx.lineTo(coords[coords.length - 1].x, coords[coords.length - 1].y);
+      ctx.stroke();
+
+      // Current pulse dot
+      const last = coords[coords.length - 1];
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(last.x - 2, last.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Initial render
+    renderRoleScreen();
+  </script>
+</body>
+</html>
