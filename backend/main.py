@@ -10,6 +10,7 @@ from backend.app.api.v1.alerts import router as alerts_router
 from backend.app.api.v1.vision import router as vision_router
 from backend.app.api.v1.assistant import router as assistant_router
 from backend.app.api.v1.incidents import router as incidents_router
+from backend.app.api.v1.admin import router as admin_router
 
 
 @asynccontextmanager
@@ -53,6 +54,7 @@ app.include_router(alerts_router, prefix=settings.API_V1_STR)
 app.include_router(vision_router, prefix=settings.API_V1_STR)
 app.include_router(assistant_router, prefix=settings.API_V1_STR)
 app.include_router(incidents_router, prefix=settings.API_V1_STR)
+app.include_router(admin_router, prefix=settings.API_V1_STR)
 
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect

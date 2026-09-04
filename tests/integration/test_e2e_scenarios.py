@@ -34,6 +34,11 @@ async def setup_database():
     await seed_initial_data()
 
 
+async def get_token(ac: AsyncClient, email: str, password: str = "password123") -> str:
+    res = await ac.post("/api/v1/auth/login", json={"email": email, "password": password})
+    return res.json()["access_token"]
+
+
 # ==============================================================================
 # SCENARIO A — NORMAL
 # ==============================================================================
@@ -168,11 +173,16 @@ async def test_scenario_c_critical():
         assert incident["status"] == "DETECTED"
 
         # Engineer assigns incident to technician
+        eng_token = await get_token(ac, "engineer@safety.org")
         assign_payload = {
             "technician_id": "technician@safety.org",
             "notes": "Urgent: De-energize feeder and inspect insulator stack under rain protocol."
         }
-        assign_res = await ac.post(f"/api/v1/incidents/{incident['id']}/assign", json=assign_payload)
+        assign_res = await ac.post(
+            f"/api/v1/incidents/{incident['id']}/assign",
+            json=assign_payload,
+            headers={"Authorization": f"Bearer {eng_token}"}
+        )
         assert assign_res.status_code == 200
         assert assign_res.json()["data"]["status"] == "ASSIGNED"
 
@@ -212,7 +222,8 @@ async def test_scenario_d_emergency():
         assert "EMERGENCY" in data["alert_message"]
 
         # Authority Escalations Endpoint
-        esc_res = await ac.get("/api/v1/incidents/escalations")
+        auth_token = await get_token(ac, "authority@safety.org")
+        esc_res = await ac.get("/api/v1/incidents/escalations", headers={"Authorization": f"Bearer {auth_token}"})
         assert esc_res.status_code == 200
         esc_data = esc_res.json()
         assert esc_data["success"] is True
