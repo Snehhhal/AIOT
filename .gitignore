@@ -29,6 +29,8 @@ chroma_db/
 /data/processed/*
 !/data/raw/.gitkeep
 !/data/processed/.gitkeep
+ai/data/inspections/*.jpg
+!ai/data/inspections/.gitkeep
 
 # AI / ML Models & Heavy Checkpoints
 *.pt

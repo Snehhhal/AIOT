@@ -1,18 +1,18 @@
 import uuid
-from typing import Optional
+from typing import Any, Dict, Optional
 from backend.app.schemas.telemetry import TelemetryIn, TelemetryEvaluationResult
 
 try:
     from ai.src.inference import leakage_classifier
-except Exception as e:
+except Exception:
     leakage_classifier = None
 
 
 class DecisionEngine:
     """
     Multi-Layer Decision Engine fusing deterministic rules, tabular ML,
-    and optional computer vision metrics to compute a Composite Risk Index (CRI).
-    Architectural hierarchy: Deterministic Safety Rules > Tabular AI > Environmental Multipliers.
+    and computer vision spatial metrics to compute a Composite Risk Index (CRI).
+    Architectural hierarchy: Hard Deterministic Safety Rules > Vision Fusion > Tabular AI.
     """
 
     # Deterministic Safety Thresholds (IEC 60479-1 touch-safety references)
@@ -23,10 +23,12 @@ class DecisionEngine:
     def evaluate_telemetry(
         self,
         telemetry: TelemetryIn,
-        visual_hazard_score: Optional[float] = None
+        visual_hazard_score: Optional[float] = None,
+        vision_details: Optional[Dict[str, Any]] = None
     ) -> TelemetryEvaluationResult:
         """
         Evaluates a single telemetry packet through the 3-layer decision pipeline.
+        Fuses physical sensor telemetry with optional computer vision evidence.
         """
         current = telemetry.leakage_current_ma
         voltage = telemetry.touch_voltage_v
@@ -65,6 +67,25 @@ class DecisionEngine:
             risk_level = "NORMAL"
 
         # -------------------------------------------------------------
+        # Cross-Modal Safety Fusion: Visual Hazard Escalation
+        # -------------------------------------------------------------
+        # If visual evidence confirms high hazard (water puddle + human <= 2.5m)
+        # and current is moderate (>= 15.0 mA) or wet conditions exist,
+        # escalate immediately to CRITICAL emergency!
+        if visual_hazard_score and visual_hazard_score >= 0.80 and (current >= 15.0 or rain):
+            rule_tripped = True
+            risk_level = "CRITICAL"
+            alert_triggered = True
+            if not alert_id:
+                alert_id = f"ALT-{uuid.uuid4().hex[:8]}"
+            dist_str = f" at {vision_details.get('estimated_distance_meters')}m" if (vision_details and vision_details.get('estimated_distance_meters')) else ""
+            alert_message = (
+                f"CRITICAL MULTI-MODAL HAZARD on {telemetry.pole_id}: "
+                f"Leakage current ({current:.1f} mA) fused with computer vision confirmation "
+                f"of waterlogging puddle and pedestrian proximity{dist_str}!"
+            )
+
+        # -------------------------------------------------------------
         # Layer 2: Machine Learning Prediction (Tabular Random Forest)
         # -------------------------------------------------------------
         ai_predicted_class = risk_level
@@ -88,7 +109,7 @@ class DecisionEngine:
         # -------------------------------------------------------------
         # Layer 3: Composite Risk Index (CRI) Calculation (0 to 100)
         # -------------------------------------------------------------
-        # 1. Leakage Component (weight: 0.40)
+        # 1. Leakage Component (weight: 0.35)
         leakage_score = min(100.0, (current / 50.0) * 100.0)
 
         # 2. Touch Voltage Component (weight: 0.15)
@@ -107,19 +128,23 @@ class DecisionEngine:
         else:
             ai_risk_score = 5.0
 
-        # 5. Environmental Multiplier (rain + humidity)
-        env_multiplier = 1.35 if rain else (1.1 if humidity > 80.0 else 1.0)
-
-        # 6. Visual Hazard Component (if available from YOLO)
+        # 5. Visual Hazard Component (from YOLO / Computer Vision) (weight: 0.20)
         vis_score = (visual_hazard_score * 100.0) if visual_hazard_score else 0.0
 
+        # 6. Environmental Multiplier (rain + humidity)
+        env_multiplier = 1.35 if rain else (1.1 if humidity > 80.0 else 1.0)
+
         raw_cri = (
-            (0.40 * leakage_score) +
+            (0.35 * leakage_score) +
             (0.15 * voltage_score) +
             (0.15 * tilt_score) +
             (0.15 * ai_risk_score) +
-            (0.15 * vis_score)
+            (0.20 * vis_score)
         ) * env_multiplier
+
+        # Cross-Modal Surge: When visual waterlogging + pedestrian hazard fuses with moderate leakage
+        if visual_hazard_score and visual_hazard_score >= 0.80 and current >= 20.0:
+            raw_cri = max(raw_cri, 98.2)
 
         composite_risk_index = round(min(100.0, max(0.0, raw_cri)), 1)
 
