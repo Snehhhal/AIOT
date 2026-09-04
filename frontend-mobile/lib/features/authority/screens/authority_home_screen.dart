@@ -1,8 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../models/pole_model.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/pole_provider.dart';
 import '../../common/widgets/status_badge.dart';
 
 class AuthorityHomeScreen extends StatelessWidget {
@@ -11,6 +13,11 @@ class AuthorityHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
+    final poleProvider = Provider.of<PoleProvider>(context);
+    final hasEmergency = poleProvider.emergencyCount > 0;
+    final overallTier = hasEmergency
+        ? RiskTier.emergency
+        : (poleProvider.warningCount > 0 ? RiskTier.warning : RiskTier.safe);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -44,19 +51,31 @@ class AuthorityHomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('METROPOLITAN AREA SAFETY INDEX', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textSecondary)),
-                      StatusBadge(tier: RiskTier.warning, isCompact: true),
+                      const Text('METROPOLITAN AREA SAFETY INDEX', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textSecondary)),
+                      StatusBadge(tier: overallTier, isCompact: true),
                     ],
                   ),
                   const SizedBox(height: 14),
-                  _buildZoneRow('Zone 1 (Kothrud/West)', 'SAFE', AppTheme.safeColor, '0 incidents'),
-                  const Divider(color: AppTheme.borderDark),
-                  _buildZoneRow('Zone 2 (FC Road/Central)', 'WARNING', AppTheme.warningColor, '2 insulation advisories'),
-                  const Divider(color: AppTheme.borderDark),
-                  _buildZoneRow('Zone 3 (Station Road/East)', 'EMERGENCY', AppTheme.emergencyColor, '1 active leak + waterlogged'),
+                  if (poleProvider.poles.isNotEmpty)
+                    ...poleProvider.poles.map((p) => Column(
+                          children: [
+                            _buildZoneRow(
+                              '${p.id} (${p.locationName})',
+                              p.status,
+                              _getTierColor(p.riskTier),
+                              'Leakage: ${p.leakageCurrent.toStringAsFixed(1)}mA • Risk: ${p.riskScore}/100',
+                            ),
+                            if (p != poleProvider.poles.last) const Divider(color: AppTheme.borderDark),
+                          ],
+                        ))
+                  else
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text('Loading zone risk metrics...', style: TextStyle(color: AppTheme.textSecondary)),
+                    ),
                 ],
               ),
             ),
@@ -74,66 +93,103 @@ class AuthorityHomeScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppTheme.emergencyColor.withOpacity(0.2),
+                  color: (hasEmergency ? AppTheme.emergencyColor : AppTheme.safeColor).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text('1 ESCALATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.emergencyColor)),
+                child: Text(
+                  hasEmergency ? '${poleProvider.emergencyCount} ESCALATION' : '0 ACTIVE',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: hasEmergency ? AppTheme.emergencyColor : AppTheme.safeColor,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: AppTheme.emergencyColor),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('ESCALATION #ESC-892', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.emergencyColor)),
-                      Text('18 mins overdue', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Incident P-001: Lineman acknowledgement timeout (>15 min). Escalated from Sub-Div Engineer to Commissioner Office.',
-                    style: TextStyle(fontSize: 13, color: AppTheme.textPrimary, height: 1.3),
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(40)),
-                          icon: const Icon(Icons.call, size: 16),
-                          label: const Text('Call Dispatch', style: TextStyle(fontSize: 12)),
-                          onPressed: () {},
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.emergencyColor,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size.fromHeight(40),
+          if (hasEmergency)
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: AppTheme.emergencyColor),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('ESCALATION #ESC-892', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.emergencyColor)),
+                        Text('18 mins overdue', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Critical leakage incident with waterlogging. Lineman acknowledgement timeout (>15 min). Direct authority intervention requested.',
+                      style: TextStyle(fontSize: 13, color: AppTheme.textPrimary, height: 1.3),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(40)),
+                            icon: const Icon(Icons.call, size: 16),
+                            label: const Text('Call Dispatch', style: TextStyle(fontSize: 12)),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Calling Emergency Dispatch Center...')),
+                              );
+                            },
                           ),
-                          icon: const Icon(Icons.emergency_share, size: 16),
-                          label: const Text('Order Cutoff', style: TextStyle(fontSize: 12)),
-                          onPressed: () {},
                         ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.emergencyColor,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(40),
+                            ),
+                            icon: const Icon(Icons.power_settings_new, size: 16),
+                            label: const Text('Order Cutoff', style: TextStyle(fontSize: 12)),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Grid Isolation Relay Tripped. Substation notified.'),
+                                  backgroundColor: AppTheme.emergencyColor,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: const [
+                    Icon(Icons.verified_user_rounded, color: AppTheme.safeColor, size: 28),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'No overdue incident escalations. All field activities within service SLAs.',
+                        style: TextStyle(fontSize: 13, color: AppTheme.textPrimary),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 20),
 
           // Area Broadcast Emergency Warning Card
@@ -144,11 +200,14 @@ class AuthorityHomeScreen extends StatelessWidget {
                 child: Icon(Icons.cell_tower, color: AppTheme.warningColor),
               ),
               title: const Text('Emergency Area Alert Dispatch', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Simulate geo-fenced safety warning push to registered citizen phones.', style: TextStyle(fontSize: 12)),
+              subtitle: const Text('Broadcast geo-fenced safety alert to citizens near dangerous poles.', style: TextStyle(fontSize: 12)),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Simulating geo-fenced emergency warning broadcast.')),
+                  const SnackBar(
+                    content: Text('Geo-fenced push alert dispatched to citizen mobile devices in Sector 4.'),
+                    backgroundColor: AppTheme.warningColor,
+                  ),
                 );
               },
             ),
@@ -158,18 +217,33 @@ class AuthorityHomeScreen extends StatelessWidget {
     );
   }
 
+  static Color _getTierColor(RiskTier tier) {
+    switch (tier) {
+      case RiskTier.emergency:
+        return AppTheme.emergencyColor;
+      case RiskTier.critical:
+        return AppTheme.dangerColor;
+      case RiskTier.warning:
+        return AppTheme.warningColor;
+      case RiskTier.safe:
+        return AppTheme.safeColor;
+    }
+  }
+
   static Widget _buildZoneRow(String zone, String status, Color color, String subtitle) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(zone, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              Text(subtitle, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(zone, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(subtitle, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+              ],
+            ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

@@ -1,7 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../core/constants/app_constants.dart';
 import '../core/utils/app_localizations.dart';
 import '../models/user_model.dart';
+import 'api_client.dart';
 
 class AuthService extends ChangeNotifier {
   UserModel? _currentUser;
@@ -60,6 +61,7 @@ class AuthService extends ChangeNotifier {
       token: 'mock-jwt-token-${assignedRole.id}',
     );
 
+    ApiClient.setAuthToken(_currentUser!.token ?? '');
     notifyListeners();
     return true;
   }
@@ -117,11 +119,15 @@ class AuthService extends ChangeNotifier {
         );
         break;
     }
+    if (_currentUser?.token != null) {
+      ApiClient.setAuthToken(_currentUser!.token!);
+    }
     notifyListeners();
   }
 
   void logout() {
     _currentUser = null;
+    ApiClient.setAuthToken('');
     notifyListeners();
   }
 }

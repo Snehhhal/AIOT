@@ -1,8 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../models/pole_model.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/pole_provider.dart';
 import '../../common/widgets/status_badge.dart';
 
 class EngineerHomeScreen extends StatelessWidget {
@@ -11,6 +13,10 @@ class EngineerHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
+    final poleProvider = Provider.of<PoleProvider>(context);
+    final criticalPoles = poleProvider.poles
+        .where((p) => p.riskTier == RiskTier.emergency || p.riskTier == RiskTier.critical)
+        .toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -39,11 +45,16 @@ class EngineerHomeScreen extends StatelessWidget {
           // Fleet Health Overview Cards
           Row(
             children: [
-              _buildSummaryCard('Fleet Poles', '42', AppTheme.infoColor, Icons.electrical_services_rounded),
+              _buildSummaryCard('Fleet Poles', '${poleProvider.totalCount}', AppTheme.infoColor, Icons.electrical_services_rounded),
               const SizedBox(width: 8),
-              _buildSummaryCard('Emergency', '1', AppTheme.emergencyColor, Icons.warning_rounded),
+              _buildSummaryCard(
+                'Emergency',
+                '${poleProvider.emergencyCount}',
+                poleProvider.emergencyCount > 0 ? AppTheme.emergencyColor : AppTheme.safeColor,
+                Icons.warning_rounded,
+              ),
               const SizedBox(width: 8),
-              _buildSummaryCard('Avg Health', '86%', AppTheme.safeColor, Icons.health_and_safety_rounded),
+              _buildSummaryCard('Avg Health', '${poleProvider.averageHealth.toStringAsFixed(0)}%', AppTheme.safeColor, Icons.health_and_safety_rounded),
             ],
           ),
           const SizedBox(height: 20),
@@ -54,69 +65,115 @@ class EngineerHomeScreen extends StatelessWidget {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 10),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Pole P-001 • Sector 4', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text('48.5mA leakage • Wet Ground • Human 1.2m', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                        ],
-                      ),
-                      const StatusBadge(tier: RiskTier.emergency, isCompact: true),
-                    ],
+          if (criticalPoles.isNotEmpty)
+            ...criticalPoles.map((pole) => Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: _getTierColor(pole.riskTier), width: 1.5),
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceDark,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
                       children: [
-                        Text('Assigned: Lineman Kailas (#14)', style: TextStyle(fontSize: 12, color: AppTheme.textPrimary)),
-                        Text('Status: UNDER INSPECTION', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.warningColor)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Pole ${pole.id} • ${pole.locationName}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                Text(
+                                  '${pole.leakageCurrent.toStringAsFixed(1)}mA leakage • ${pole.rain ? "Wet Ground" : "Dry"} • ${pole.humanDetected ? "Human in Proximity" : "No Human Nearby"}',
+                                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                ),
+                              ],
+                            ),
+                            StatusBadge(tier: pole.riskTier, isCompact: true),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceDark,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Assigned: Lineman Kailas (#14)', style: TextStyle(fontSize: 12, color: AppTheme.textPrimary)),
+                              Text(
+                                pole.riskTier == RiskTier.emergency ? 'STATUS: URGENT ESCALATION' : 'STATUS: DISPATCHED',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: pole.riskTier == RiskTier.emergency ? AppTheme.emergencyColor : AppTheme.warningColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(40)),
+                                icon: const Icon(Icons.alt_route_rounded, size: 16),
+                                label: const Text('Reassign Tech', style: TextStyle(fontSize: 12)),
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Reassign technician request sent for ${pole.id}.')),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.safeColor,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size.fromHeight(40),
+                                ),
+                                icon: const Icon(Icons.check, size: 16),
+                                label: const Text('Approve Work', style: TextStyle(fontSize: 12)),
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Work order approved for ${pole.id}.'), backgroundColor: AppTheme.safeColor),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(40)),
-                          icon: const Icon(Icons.alt_route_rounded, size: 16),
-                          label: const Text('Reassign Tech', style: TextStyle(fontSize: 12)),
-                          onPressed: () {},
-                        ),
+                ))
+          else
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_outline, color: AppTheme.safeColor, size: 28),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('All Poles Operating Safely', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                          Text('No critical leakage incidents detected across monitored sectors.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.safeColor,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size.fromHeight(40),
-                          ),
-                          icon: const Icon(Icons.check, size: 16),
-                          label: const Text('Approve Work', style: TextStyle(fontSize: 12)),
-                          onPressed: () {},
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 20),
 
           // AI Predictive Maintenance & Health Ranking
@@ -125,13 +182,28 @@ class EngineerHomeScreen extends StatelessWidget {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 10),
-          _buildHealthRow('P-001', '58/100', 'High Priority', AppTheme.emergencyColor),
-          _buildHealthRow('P-002', '76/100', 'Moderate Degradation', AppTheme.warningColor),
-          _buildHealthRow('P-003', '94/100', 'Optimal Healthy', AppTheme.safeColor),
-          _buildHealthRow('P-004', '98/100', 'Optimal Healthy', AppTheme.safeColor),
+          ...poleProvider.poles.map((p) => _buildHealthRow(
+                p.id,
+                '${p.healthScore}/100',
+                '${p.status} • Leakage: ${p.leakageCurrent.toStringAsFixed(1)}mA',
+                _getTierColor(p.riskTier),
+              )),
         ],
       ),
     );
+  }
+
+  static Color _getTierColor(RiskTier tier) {
+    switch (tier) {
+      case RiskTier.emergency:
+        return AppTheme.emergencyColor;
+      case RiskTier.critical:
+        return AppTheme.dangerColor;
+      case RiskTier.warning:
+        return AppTheme.warningColor;
+      case RiskTier.safe:
+        return AppTheme.safeColor;
+    }
   }
 
   static Widget _buildSummaryCard(String label, String value, Color color, IconData icon) {
@@ -162,7 +234,10 @@ class EngineerHomeScreen extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: color.withOpacity(0.15),
-          child: Text(poleId.substring(2), style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+          child: Text(
+            poleId.length > 2 ? poleId.substring(2) : poleId,
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          ),
         ),
         title: Text('Pole $poleId', style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(desc, style: const TextStyle(fontSize: 12)),

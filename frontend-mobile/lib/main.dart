@@ -6,6 +6,7 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/navigation/screens/role_shell_screen.dart';
 import 'services/auth_service.dart';
+import 'services/pole_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => PoleProvider()),
       ],
       child: const ElectricPoleSafetyApp(),
     ),

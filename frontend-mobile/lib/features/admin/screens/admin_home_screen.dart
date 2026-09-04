@@ -1,8 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/pole_provider.dart';
+import '../../common/widgets/status_badge.dart';
 
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
@@ -10,6 +12,10 @@ class AdminHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
+    final poleProvider = Provider.of<PoleProvider>(context);
+    final targetPole = poleProvider.poles.isNotEmpty
+        ? poleProvider.poles.firstWhere((p) => p.id == 'P-001', orElse: () => poleProvider.poles.first)
+        : null;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -65,43 +71,76 @@ class AdminHomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.play_circle_filled_rounded, color: AppTheme.infoColor),
-                    SizedBox(width: 8),
-                    Text(
-                      'Judge Demo Control Center',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.infoColor),
+                    Row(
+                      children: const [
+                        Icon(Icons.play_circle_filled_rounded, color: AppTheme.infoColor),
+                        SizedBox(width: 8),
+                        Text(
+                          'Judge Demo Control Center',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.infoColor),
+                        ),
+                      ],
                     ),
+                    if (targetPole != null)
+                      StatusBadge(tier: targetPole.riskTier, isCompact: true),
                   ],
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Instantly trigger simulated fault scenarios on Pole P-001 to demonstrate AI risk escalation, alert dispatch, and technician workflows.',
+                  'Instantly trigger simulated fault scenarios on Pole P-001. All roles (Citizen, Tech, Engineer, Authority) react in real time.',
                   style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
+                if (targetPole != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardDark,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppTheme.borderDark),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Target: ${targetPole.id} (${targetPole.status})',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                        Text('Leak: ${targetPole.leakageCurrent.toStringAsFixed(1)}mA | Risk: ${targetPole.riskScore}',
+                            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
                     _buildScenarioButton(context, '1. Normal Steady (Safe)', Colors.green, () {
-                      _showDemoSnackBar(context, 'Triggered Normal Baseline on P-001 (Safe, 2.1mA).');
+                      poleProvider.triggerScenario('P-001', 'NORMAL');
+                      _showDemoSnackBar(context, 'Simulated Normal Steady on P-001 (Safe, 1.5mA).');
                     }),
                     _buildScenarioButton(context, '2. Leakage Spike (>30mA)', Colors.amber, () {
-                      _showDemoSnackBar(context, 'Triggered Insulation Breakdown (38.5mA leakage).');
+                      poleProvider.triggerScenario('P-001', 'LEAKAGE');
+                      _showDemoSnackBar(context, 'Simulated Insulation Breakdown (36.5mA) on P-001.');
                     }),
                     _buildScenarioButton(context, '3. Leakage + Monsoon Rain', Colors.orange, () {
-                      _showDemoSnackBar(context, 'Simulating Leakage in Heavy Rain on P-001.');
+                      poleProvider.triggerScenario('P-001', 'LEAKAGE_RAIN');
+                      _showDemoSnackBar(context, 'Simulated Leakage in Heavy Rain on P-001.');
                     }),
                     _buildScenarioButton(context, '4. CV: Human Proximity', Colors.purple, () {
+                      poleProvider.triggerScenario('P-001', 'HUMAN_PROXIMITY');
                       _showDemoSnackBar(context, 'YOLO detected human within 1.2m of wet energized pole.');
                     }),
-                    _buildScenarioButton(context, '5. FULL EMERGENCY (All Hazards)', Colors.red, () {
+                    _buildScenarioButton(context, '5. FULL EMERGENCY', Colors.red, () {
+                      poleProvider.triggerScenario('P-001', 'FULL_EMERGENCY');
                       _showDemoSnackBar(context, 'EMERGENCY: Leakage + Rain + Human + Waterlogged!');
                     }),
-                    _buildScenarioButton(context, '6. Technician No-Response', Colors.deepOrange, () {
-                      _showDemoSnackBar(context, 'Started non-response timer -> Escalates to Engineer/Authority.');
+                    _buildScenarioButton(context, '🔄 Reset / Reload Fleet', Colors.blueGrey, () {
+                      poleProvider.loadPoles();
+                      _showDemoSnackBar(context, 'Reloaded pole fleet from backend database.');
                     }),
                   ],
                 ),
