@@ -1,5 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'dart:async';
 import '../models/pole_model.dart';
+import '../models/sensor_history_model.dart';
 import '../core/constants/app_constants.dart';
 import 'api_client.dart';
 
@@ -8,11 +10,14 @@ class PoleProvider extends ChangeNotifier {
   PoleModel? _selectedPole;
   bool _isLoading = false;
   String? _errorMessage;
+  final Map<String, List<SensorHistoryPoint>> _historyCache = {};
+  Timer? _pollingTimer;
 
   List<PoleModel> get poles => _poles;
   PoleModel? get selectedPole => _selectedPole ?? (_poles.isNotEmpty ? _poles.first : null);
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  Map<String, List<SensorHistoryPoint>> get historyCache => _historyCache;
 
   // Fleet Statistics
   int get totalCount => _poles.length;
@@ -129,7 +134,49 @@ class PoleProvider extends ChangeNotifier {
       if (_selectedPole?.id == poleId) {
         _selectedPole = _poles[index];
       }
+
+      // 3. Append to history cache for live interactive graph updating
+      final newPoint = SensorHistoryPoint(
+        timestamp: DateTime.now(),
+        leakageCurrent: leakage,
+        voltage: voltage,
+        temperature: 28.0,
+        humidity: rain ? 95.0 : 50.0,
+        tiltAngle: 1.2,
+        rain: rain,
+      );
+      if (_historyCache.containsKey(poleId)) {
+        _historyCache[poleId]!.add(newPoint);
+        if (_historyCache[poleId]!.length > 30) {
+          _historyCache[poleId]!.removeAt(0);
+        }
+      } else {
+        _historyCache[poleId] = [newPoint];
+      }
+
       notifyListeners();
     }
+  }
+
+  /// Fetches sequential 24-hour history for time-series trend charts
+  Future<List<SensorHistoryPoint>> fetchPoleHistory(String poleId, {bool forceRefresh = false}) async {
+    if (!forceRefresh && _historyCache.containsKey(poleId) && _historyCache[poleId]!.isNotEmpty) {
+      return _historyCache[poleId]!;
+    }
+
+    try {
+      final history = await ApiClient.getPoleHistory(poleId);
+      _historyCache[poleId] = history;
+      notifyListeners();
+      return history;
+    } catch (_) {
+      return _historyCache[poleId] ?? [];
+    }
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
   }
 }

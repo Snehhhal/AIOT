@@ -6,6 +6,7 @@ import '../../../models/pole_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/pole_provider.dart';
 import '../../common/widgets/status_badge.dart';
+import '../../monitoring/screens/pole_detail_screen.dart';
 
 class TechnicianHomeScreen extends StatefulWidget {
   const TechnicianHomeScreen({super.key});
@@ -301,6 +302,14 @@ class _TechnicianHomeScreenState extends State<TechnicianHomeScreen> {
                         _buildActionButton('UPLOAD PHOTO', Icons.camera_alt_outlined, () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Camera opened for evidence upload.')),
+                          );
+                        }),
+                        _buildActionButton('VIEW CHARTS', Icons.show_chart_rounded, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PoleDetailScreen(poleId: selectedPole.id),
+                            ),
                           );
                         }),
                         ElevatedButton.icon(

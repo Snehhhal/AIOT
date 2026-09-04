@@ -1,8 +1,9 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../core/constants/app_constants.dart';
 import '../models/pole_model.dart';
+import '../models/sensor_history_model.dart';
 
 class ApiClient {
   static String baseUrl = AppConstants.defaultApiBaseUrl;
@@ -58,7 +59,7 @@ class ApiClient {
   }
 
   /// Fetches historical trend readings from GET /api/v1/poles/{pole_id}/history
-  static Future<List<Map<String, dynamic>>> getPoleHistory(String poleId) async {
+  static Future<List<SensorHistoryPoint>> getPoleHistory(String poleId) async {
     try {
       final response = await http
           .get(Uri.parse('$baseUrl/poles/$poleId/history'), headers: _headers)
@@ -66,10 +67,13 @@ class ApiClient {
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        return List<Map<String, dynamic>>.from(decoded['data'] ?? []);
+        final list = decoded['data'] as List<dynamic>?;
+        if (list != null && list.isNotEmpty) {
+          return list.map((item) => SensorHistoryPoint.fromJson(item as Map<String, dynamic>)).toList();
+        }
       }
     } catch (_) {}
-    return [];
+    return _generateFallbackHistory(poleId);
   }
 
   /// Submits telemetry to POST /api/v1/telemetry
@@ -167,5 +171,56 @@ class ApiClient {
         isOnline: true,
       ),
     ];
+  }
+
+  static List<SensorHistoryPoint> _generateFallbackHistory(String poleId) {
+    final now = DateTime.now();
+    final List<SensorHistoryPoint> list = [];
+
+    for (int i = 0; i < 24; i++) {
+      final ts = now.subtract(Duration(hours: 23 - i));
+      double leak = 1.8;
+      double volt = 230.0;
+      double temp = 27.5 + (i % 5) * 0.4;
+      double hum = 55.0;
+      bool rain = false;
+      double tilt = 1.1;
+
+      if (poleId == "P-001") {
+        if (i < 15) {
+          leak = 2.0 + (i * 0.2);
+          volt = 230.0 - (i * 0.1);
+        } else if (i < 20) {
+          leak = 8.0 + ((i - 15) * 3.5);
+          volt = 227.0 - ((i - 15) * 1.5);
+          hum = 75.0;
+        } else {
+          leak = 34.0 + ((i - 20) * 3.6);
+          volt = 55.0 + ((i - 20) * 4.8);
+          rain = true;
+          hum = 96.0;
+          tilt = 2.4;
+        }
+      } else if (poleId == "P-002") {
+        leak = 9.5 + ((i % 7) * 0.9);
+        volt = 228.0 - (i % 3) * 0.5;
+        hum = 65.0;
+      } else {
+        leak = 1.0 + ((i % 5) * 0.2);
+        volt = 230.0 + (i % 2) * 0.5;
+        hum = 50.0;
+      }
+
+      list.add(SensorHistoryPoint(
+        timestamp: ts,
+        leakageCurrent: double.parse(leak.toStringAsFixed(1)),
+        voltage: double.parse(volt.toStringAsFixed(1)),
+        temperature: double.parse(temp.toStringAsFixed(1)),
+        humidity: double.parse(hum.toStringAsFixed(1)),
+        tiltAngle: tilt,
+        rain: rain,
+      ));
+    }
+    return list;
   }
 }

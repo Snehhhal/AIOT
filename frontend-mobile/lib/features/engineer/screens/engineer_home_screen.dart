@@ -6,6 +6,7 @@ import '../../../models/pole_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/pole_provider.dart';
 import '../../common/widgets/status_badge.dart';
+import '../../monitoring/screens/pole_detail_screen.dart';
 
 class EngineerHomeScreen extends StatelessWidget {
   const EngineerHomeScreen({super.key});
@@ -187,6 +188,14 @@ class EngineerHomeScreen extends StatelessWidget {
                 '${p.healthScore}/100',
                 '${p.status} • Leakage: ${p.leakageCurrent.toStringAsFixed(1)}mA',
                 _getTierColor(p.riskTier),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PoleDetailScreen(poleId: p.id),
+                    ),
+                  );
+                },
               )),
         ],
       ),
@@ -228,10 +237,11 @@ class EngineerHomeScreen extends StatelessWidget {
     );
   }
 
-  static Widget _buildHealthRow(String poleId, String score, String desc, Color color) {
+  static Widget _buildHealthRow(String poleId, String score, String desc, Color color, {VoidCallback? onTap}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
+        onTap: onTap,
         leading: CircleAvatar(
           backgroundColor: color.withOpacity(0.15),
           child: Text(
@@ -241,7 +251,14 @@ class EngineerHomeScreen extends StatelessWidget {
         ),
         title: Text('Pole $poleId', style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(desc, style: const TextStyle(fontSize: 12)),
-        trailing: Text(score, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color)),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(score, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color)),
+            const SizedBox(width: 6),
+            const Icon(Icons.chevron_right, size: 18, color: AppTheme.textSecondary),
+          ],
+        ),
       ),
     );
   }

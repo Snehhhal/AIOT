@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
@@ -6,6 +6,7 @@ import '../../../core/utils/app_localizations.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/pole_provider.dart';
 import '../../common/widgets/status_badge.dart';
+import '../../monitoring/screens/pole_detail_screen.dart';
 
 class CitizenHomeScreen extends StatelessWidget {
   const CitizenHomeScreen({super.key});
@@ -72,77 +73,99 @@ class CitizenHomeScreen extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Primary Safety Indicator Card (Bound to Live Telemetry)
-          Card(
-            color: AppTheme.surfaceDark,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: statusColor, width: isDanger ? 2.5 : 1.5),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'NEAREST POLE: ${nearestPole?.id ?? "P-001"} (15m)',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textSecondary,
-                          letterSpacing: 0.5,
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              if (nearestPole != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PoleDetailScreen(poleId: nearestPole.id),
+                  ),
+                );
+              }
+            },
+            child: Card(
+              color: AppTheme.surfaceDark,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: statusColor, width: isDanger ? 2.5 : 1.5),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'NEAREST POLE: ${nearestPole?.id ?? "P-001"} (15m)',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textSecondary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        StatusBadge(tier: riskTier),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    CircleAvatar(
+                      radius: 36,
+                      backgroundColor: statusColor.withOpacity(0.15),
+                      child: Icon(
+                        riskTier.icon,
+                        color: statusColor,
+                        size: 42,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      isDanger ? loc.tr('danger_title') : (riskTier == RiskTier.warning ? loc.tr('warning_title') : loc.tr('safe_title')),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: statusColor,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isDanger ? loc.tr('danger_desc') : (riskTier == RiskTier.warning ? loc.tr('warning_desc') : loc.tr('safe_desc')),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    if (nearestPole != null && nearestPole.rain)
+                      Container(
+                        margin: const EdgeInsets.only(top: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.infoColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.water_drop, size: 14, color: AppTheme.infoColor),
+                            SizedBox(width: 4),
+                            Text('Wet Ground Warning: Rain Detected Near Base', style: TextStyle(fontSize: 11, color: AppTheme.infoColor, fontWeight: FontWeight.bold)),
+                          ],
                         ),
                       ),
-                      StatusBadge(tier: riskTier),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  CircleAvatar(
-                    radius: 36,
-                    backgroundColor: statusColor.withOpacity(0.15),
-                    child: Icon(
-                      riskTier.icon,
-                      color: statusColor,
-                      size: 42,
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.touch_app_rounded, size: 14, color: AppTheme.textSecondary),
+                        SizedBox(width: 4),
+                        Text('Tap to view live trend charts & diagnostics', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    isDanger ? loc.tr('danger_title') : (riskTier == RiskTier.warning ? loc.tr('warning_title') : loc.tr('safe_title')),
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: statusColor,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    isDanger ? loc.tr('danger_desc') : (riskTier == RiskTier.warning ? loc.tr('warning_desc') : loc.tr('safe_desc')),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  if (nearestPole != null && nearestPole.rain)
-                    Container(
-                      margin: const EdgeInsets.only(top: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.infoColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.water_drop, size: 14, color: AppTheme.infoColor),
-                          SizedBox(width: 4),
-                          Text('Wet Ground Warning: Rain Detected Near Base', style: TextStyle(fontSize: 11, color: AppTheme.infoColor, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

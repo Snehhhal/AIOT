@@ -1,4 +1,4 @@
-﻿from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient
 from backend.main import app
 
 client = TestClient(app)
@@ -39,3 +39,26 @@ def test_ingest_critical_leakage_in_rain():
     assert data["risk_level"] == "CRITICAL"
     assert data["alert_triggered"] is True
     assert data["deterministic_rule_tripped"] is True
+
+
+def test_websocket_telemetry_stream():
+    """Verify that clients can subscribe to the /ws/telemetry streaming bus."""
+    with client.websocket_connect("/ws/telemetry") as ws:
+        # Ingest a packet while websocket is connected
+        payload = {
+            "pole_id": "P-001",
+            "leakage_current_ma": 32.5,
+            "touch_voltage_v": 54.0,
+            "tilt_angle_deg": 1.1,
+            "rain_detected": False,
+            "is_simulated": True
+        }
+        res = client.post("/api/v1/telemetry", json=payload)
+        assert res.status_code == 201
+
+        # The WebSocket receives the broadcasted telemetry packet
+        msg = ws.receive_json()
+        assert msg["event"] == "TELEMETRY_PACKET"
+        assert msg["pole_id"] == "P-001"
+        assert msg["leakage_current_ma"] == 32.5
+

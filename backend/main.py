@@ -1,4 +1,4 @@
-﻿from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings
@@ -53,6 +53,9 @@ app.include_router(vision_router, prefix=settings.API_V1_STR)
 app.include_router(assistant_router, prefix=settings.API_V1_STR)
 
 
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from backend.app.core.websocket import ws_manager
+
 @app.get("/health", tags=["Health"])
 @app.get(f"{settings.API_V1_STR}/health", tags=["Health"])
 async def health_check():
@@ -64,6 +67,36 @@ async def health_check():
         "supported_roles": ["CITIZEN", "TECHNICIAN", "ENGINEER", "AUTHORITY", "ADMIN"],
         "version": "1.0.0"
     }
+
+
+# =====================================================================
+# Real-Time WebSocket Streaming Bus (Section 5 of API Design)
+# =====================================================================
+@app.websocket("/ws/telemetry")
+async def websocket_telemetry_stream(websocket: WebSocket):
+    """Streams live telemetry packets to connected dashboards or Flutter apps."""
+    await ws_manager.connect_telemetry(websocket)
+    try:
+        while True:
+            # Keep-alive receive loop
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect_telemetry(websocket)
+    except Exception:
+        ws_manager.disconnect_telemetry(websocket)
+
+
+@app.websocket("/ws/alerts")
+async def websocket_alerts_stream(websocket: WebSocket):
+    """Streams active hazard alerts as soon as the Decision Engine triggers them."""
+    await ws_manager.connect_alerts(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect_alerts(websocket)
+    except Exception:
+        ws_manager.disconnect_alerts(websocket)
 
 
 if __name__ == "__main__":

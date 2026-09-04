@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/pole_provider.dart';
 import '../../common/widgets/status_badge.dart';
+import '../../monitoring/screens/pole_detail_screen.dart';
 
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
@@ -95,21 +96,38 @@ class AdminHomeScreen extends StatelessWidget {
                 ),
                 if (targetPole != null) ...[
                   const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.cardDark,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.borderDark),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Target: ${targetPole.id} (${targetPole.status})',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
-                        Text('Leak: ${targetPole.leakageCurrent.toStringAsFixed(1)}mA | Risk: ${targetPole.riskScore}',
-                            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                      ],
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PoleDetailScreen(poleId: targetPole.id),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.cardDark,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.borderDark),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Text('Target: ${targetPole.id} (${targetPole.status})',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.open_in_new_rounded, size: 12, color: AppTheme.infoColor),
+                            ],
+                          ),
+                          Text('Leak: ${targetPole.leakageCurrent.toStringAsFixed(1)}mA | Risk: ${targetPole.riskScore}',
+                              style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                        ],
+                      ),
                     ),
                   ),
                 ],

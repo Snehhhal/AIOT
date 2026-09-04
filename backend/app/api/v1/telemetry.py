@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +11,7 @@ from backend.app.schemas.telemetry import (
     TelemetryEvaluationResult
 )
 from backend.app.services.decision_engine import decision_engine
+from backend.app.core.websocket import ws_manager
 
 router = APIRouter(tags=["IoT Ingestion & Telemetry"])
 
@@ -70,6 +71,36 @@ async def _process_single_reading(telemetry: TelemetryIn, db: AsyncSession) -> T
         db.add(incident_record)
 
     await db.commit()
+
+    # 5. Broadcast to connected WebSocket subscribers in real time
+    try:
+        await ws_manager.broadcast_telemetry({
+            "event": "TELEMETRY_PACKET",
+            "pole_id": telemetry.pole_id,
+            "leakage_current_ma": telemetry.leakage_current_ma,
+            "touch_voltage_v": telemetry.touch_voltage_v,
+            "tilt_angle_deg": telemetry.tilt_angle_deg,
+            "vibration_g": telemetry.vibration_g,
+            "temperature_c": telemetry.temperature_c,
+            "humidity_pct": telemetry.humidity_pct,
+            "rain_detected": telemetry.rain_detected,
+            "risk_level": evaluation.risk_level,
+            "composite_risk_index": evaluation.composite_risk_index,
+            "alert_triggered": evaluation.alert_triggered,
+            "timestamp": (telemetry.recorded_at or datetime.now(timezone.utc)).isoformat()
+        })
+        if evaluation.alert_triggered:
+            await ws_manager.broadcast_alert({
+                "event": "NEW_ALERT",
+                "alert_id": evaluation.alert_id,
+                "pole_id": telemetry.pole_id,
+                "severity": evaluation.risk_level,
+                "message": evaluation.alert_message,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+    except Exception:
+        pass
+
     return evaluation
 
 

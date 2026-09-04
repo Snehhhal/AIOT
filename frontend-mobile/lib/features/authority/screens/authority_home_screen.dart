@@ -6,6 +6,7 @@ import '../../../models/pole_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/pole_provider.dart';
 import '../../common/widgets/status_badge.dart';
+import '../../monitoring/screens/pole_detail_screen.dart';
 
 class AuthorityHomeScreen extends StatelessWidget {
   const AuthorityHomeScreen({super.key});
@@ -62,11 +63,21 @@ class AuthorityHomeScreen extends StatelessWidget {
                   if (poleProvider.poles.isNotEmpty)
                     ...poleProvider.poles.map((p) => Column(
                           children: [
-                            _buildZoneRow(
-                              '${p.id} (${p.locationName})',
-                              p.status,
-                              _getTierColor(p.riskTier),
-                              'Leakage: ${p.leakageCurrent.toStringAsFixed(1)}mA • Risk: ${p.riskScore}/100',
+                            InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => PoleDetailScreen(poleId: p.id),
+                                  ),
+                                );
+                              },
+                              child: _buildZoneRow(
+                                '${p.id} (${p.locationName})',
+                                p.status,
+                                _getTierColor(p.riskTier),
+                                'Leakage: ${p.leakageCurrent.toStringAsFixed(1)}mA • Risk: ${p.riskScore}/100',
+                              ),
                             ),
                             if (p != poleProvider.poles.last) const Divider(color: AppTheme.borderDark),
                           ],

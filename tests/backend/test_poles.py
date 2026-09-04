@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from backend.main import app
@@ -101,9 +101,12 @@ async def test_admin_create_pole():
         )
         token = login_res.json()["access_token"]
 
-        # 2. Register P-005
+        import uuid
+        test_pole_id = f"P-TEST-{uuid.uuid4().hex[:4]}"
+
+        # 2. Register new pole
         pole_payload = {
-            "id": "P-005",
+            "id": test_pole_id,
             "name": "University Circle - West Gate",
             "latitude": 18.5300,
             "longitude": 73.8300,
@@ -119,4 +122,4 @@ async def test_admin_create_pole():
             headers={"Authorization": f"Bearer {token}"}
         )
         assert create_res.status_code == 201
-        assert create_res.json()["data"]["id"] == "P-005"
+        assert create_res.json()["data"]["id"] == test_pole_id
