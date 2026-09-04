@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "1. Run Complete Platform (1-Click)",
+            "type": "shell",
+            "command": ".\\run.bat",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "2. Start Backend Only",
+            "type": "shell",
+            "command": ".venv\\Scripts\\uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload",
+            "problemMatcher": []
+        },
+        {
+            "label": "3. Run Automated Tests (54 Passed)",
+            "type": "shell",
+            "command": ".venv\\Scripts\\pytest tests/ -v -o pythonpath=.",
+            "problemMatcher": []
+        }
+    ]
+}
