@@ -87,6 +87,7 @@ esp32/.vscode/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
+!.vscode/launch.json
 *.swp
 *.swo
 .DS_Store

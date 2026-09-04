@@ -1,0 +1,47 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "FastAPI: Run PoleGuard Backend",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "backend.main:app",
+                "--host", "0.0.0.0",
+                "--port", "8000",
+                "--reload"
+            ],
+            "jinja": true,
+            "justMyCode": true,
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Pytest: Run All 54 Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/",
+                "-v",
+                "-o",
+                "pythonpath=."
+            ],
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe"
+        },
+        {
+            "name": "IoT Simulator: Run Telemetry Stream",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/simulate_telemetry.py",
+            "args": [
+                "--scenario", "stream",
+                "--count", "10"
+            ],
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe"
+        }
+    ]
+}
