@@ -40,9 +40,9 @@ async def _process_single_reading(telemetry: TelemetryIn, db: AsyncSession) -> T
     if pole:
         pole.last_heartbeat = reading_record.recorded_at
         pole.risk_score = int(evaluation.composite_risk_index)
-        if evaluation.risk_level in ["CRITICAL", "HIGH_RISK"]:
+        if evaluation.risk_level in ["EMERGENCY", "CRITICAL", "HIGH_RISK"]:
             pole.status = "CRITICAL"
-        elif evaluation.risk_level == "ADVISORY":
+        elif evaluation.risk_level in ["WARNING", "ADVISORY"]:
             pole.status = "WARNING"
         else:
             pole.status = "HEALTHY"

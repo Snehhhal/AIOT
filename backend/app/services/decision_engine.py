@@ -44,7 +44,17 @@ class DecisionEngine:
         # -------------------------------------------------------------
         # Layer 1: Deterministic Rule Checks (Hard Safety Constraints)
         # -------------------------------------------------------------
-        if current >= self.THRESHOLD_LEAKAGE_DANGER:
+        if (current >= self.THRESHOLD_LEAKAGE_DANGER and tilt >= self.THRESHOLD_TILT_DANGER) or \
+           (current >= 40.0 and tilt >= 12.0 and telemetry.vibration_g >= 1.5):
+            rule_tripped = True
+            risk_level = "EMERGENCY"
+            alert_triggered = True
+            alert_id = f"ALT-{uuid.uuid4().hex[:8]}"
+            alert_message = (
+                f"EMERGENCY: Catastrophic dual failure on {telemetry.pole_id}! "
+                f"Severe leakage ({current:.1f} mA) fused with structural compromise ({tilt:.1f}°, {telemetry.vibration_g:.1f}g)!"
+            )
+        elif current >= self.THRESHOLD_LEAKAGE_DANGER:
             rule_tripped = True
             risk_level = "CRITICAL" if (rain or tilt > 10.0) else "HIGH_RISK"
             alert_triggered = True
@@ -61,8 +71,10 @@ class DecisionEngine:
             alert_id = f"ALT-{uuid.uuid4().hex[:8]}"
             alert_message = f"Severe structural tilt ({tilt:.1f}°) detected on {telemetry.pole_id}."
         elif current >= self.THRESHOLD_LEAKAGE_ADVISORY:
-            risk_level = "ADVISORY"
-            alert_message = f"Insulation degradation advisory ({current:.1f} mA) on {telemetry.pole_id}."
+            risk_level = "WARNING"
+            alert_triggered = True
+            alert_id = f"ALT-{uuid.uuid4().hex[:8]}"
+            alert_message = f"Insulation degradation warning ({current:.1f} mA) on {telemetry.pole_id}."
         else:
             risk_level = "NORMAL"
 
@@ -147,9 +159,19 @@ class DecisionEngine:
             raw_cri = max(raw_cri, 98.2)
 
         composite_risk_index = round(min(100.0, max(0.0, raw_cri)), 1)
+        if risk_level == "CRITICAL":
+            composite_risk_index = max(composite_risk_index, 75.0)
+        elif risk_level == "EMERGENCY":
+            composite_risk_index = max(composite_risk_index, 95.0)
 
-        # Elevate to CRITICAL if CRI >= 85
-        if composite_risk_index >= 85.0 and risk_level != "CRITICAL":
+        # Elevate to EMERGENCY or CRITICAL based on CRI
+        if composite_risk_index >= 95.0 and (current >= 35.0 or tilt >= 15.0) and risk_level != "EMERGENCY":
+            risk_level = "EMERGENCY"
+            alert_triggered = True
+            if not alert_id:
+                alert_id = f"ALT-{uuid.uuid4().hex[:8]}"
+            alert_message = f"Catastrophic emergency safety index ({composite_risk_index}/100) exceeded on {telemetry.pole_id}!"
+        elif composite_risk_index >= 85.0 and risk_level not in ["CRITICAL", "EMERGENCY"]:
             risk_level = "CRITICAL"
             alert_triggered = True
             if not alert_id:
