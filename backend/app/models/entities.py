@@ -26,6 +26,8 @@ class Pole(Base):
     longitude = Column(Float, nullable=False)
     zone = Column(String(64), nullable=False, default="Sector 1")
     status = Column(String(32), default="HEALTHY") # HEALTHY, WARNING, CRITICAL, OFFLINE
+    health_score = Column(Integer, default=95)     # 0 - 100
+    risk_score = Column(Integer, default=5)         # 0 - 100
     is_active = Column(Boolean, default=True)
     last_heartbeat = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
