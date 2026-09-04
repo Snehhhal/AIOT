@@ -1,4 +1,4 @@
-﻿# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -40,6 +40,7 @@ chroma_db/
 *.pkl
 /ai/models/*
 !/ai/models/.gitkeep
+!/ai/models/model_metadata.json
 
 # Node / Web Frontend
 node_modules/

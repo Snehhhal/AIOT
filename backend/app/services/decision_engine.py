@@ -1,12 +1,18 @@
-﻿import uuid
+import uuid
 from typing import Optional
 from backend.app.schemas.telemetry import TelemetryIn, TelemetryEvaluationResult
+
+try:
+    from ai.src.inference import leakage_classifier
+except Exception as e:
+    leakage_classifier = None
 
 
 class DecisionEngine:
     """
     Multi-Layer Decision Engine fusing deterministic rules, tabular ML,
-    and optional computer vision metrics to compute a Composite Risk Index.
+    and optional computer vision metrics to compute a Composite Risk Index (CRI).
+    Architectural hierarchy: Deterministic Safety Rules > Tabular AI > Environmental Multipliers.
     """
 
     # Deterministic Safety Thresholds (IEC 60479-1 touch-safety references)
@@ -59,9 +65,30 @@ class DecisionEngine:
             risk_level = "NORMAL"
 
         # -------------------------------------------------------------
-        # Layer 2: Composite Risk Index (CRI) Calculation (0 to 100)
+        # Layer 2: Machine Learning Prediction (Tabular Random Forest)
         # -------------------------------------------------------------
-        # 1. Leakage Component (weight: 0.50)
+        ai_predicted_class = risk_level
+        ai_confidence = 0.95
+
+        if leakage_classifier is not None:
+            try:
+                ai_res = leakage_classifier.predict(telemetry)
+                ai_predicted_class = ai_res.get("predicted_class", risk_level)
+                ai_confidence = float(ai_res.get("confidence", 0.95))
+            except Exception:
+                pass
+
+        # If AI model flags high hazard but deterministic rules haven't tripped,
+        # escalate to ADVISORY if currently NORMAL
+        if not rule_tripped and ai_predicted_class in ["HIGH_RISK", "CRITICAL"] and ai_confidence >= 0.85:
+            if risk_level == "NORMAL":
+                risk_level = "ADVISORY"
+                alert_message = f"AI predictive anomaly: compound multi-factor risk detected ({ai_predicted_class}, {ai_confidence:.0%} confidence)."
+
+        # -------------------------------------------------------------
+        # Layer 3: Composite Risk Index (CRI) Calculation (0 to 100)
+        # -------------------------------------------------------------
+        # 1. Leakage Component (weight: 0.40)
         leakage_score = min(100.0, (current / 50.0) * 100.0)
 
         # 2. Touch Voltage Component (weight: 0.15)
@@ -70,17 +97,28 @@ class DecisionEngine:
         # 3. Tilt Component (weight: 0.15)
         tilt_score = min(100.0, (tilt / 30.0) * 100.0)
 
-        # 4. Environmental Multiplier (rain + humidity)
+        # 4. AI Probabilistic Component (weight: 0.15)
+        if ai_predicted_class == "CRITICAL":
+            ai_risk_score = 100.0 * ai_confidence
+        elif ai_predicted_class == "HIGH_RISK":
+            ai_risk_score = 75.0 * ai_confidence
+        elif ai_predicted_class == "ADVISORY":
+            ai_risk_score = 40.0 * ai_confidence
+        else:
+            ai_risk_score = 5.0
+
+        # 5. Environmental Multiplier (rain + humidity)
         env_multiplier = 1.35 if rain else (1.1 if humidity > 80.0 else 1.0)
 
-        # 5. Visual Hazard Component (if available from YOLO)
+        # 6. Visual Hazard Component (if available from YOLO)
         vis_score = (visual_hazard_score * 100.0) if visual_hazard_score else 0.0
 
         raw_cri = (
-            (0.50 * leakage_score) +
+            (0.40 * leakage_score) +
             (0.15 * voltage_score) +
             (0.15 * tilt_score) +
-            (0.20 * vis_score)
+            (0.15 * ai_risk_score) +
+            (0.15 * vis_score)
         ) * env_multiplier
 
         composite_risk_index = round(min(100.0, max(0.0, raw_cri)), 1)
@@ -98,8 +136,8 @@ class DecisionEngine:
             risk_level=risk_level,
             composite_risk_index=composite_risk_index,
             deterministic_rule_tripped=rule_tripped,
-            ai_predicted_class=risk_level,
-            ai_confidence=0.95,
+            ai_predicted_class=ai_predicted_class,
+            ai_confidence=ai_confidence,
             alert_triggered=alert_triggered,
             alert_id=alert_id,
             alert_message=alert_message
