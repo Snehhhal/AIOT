@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 
 class StatusBadge extends StatelessWidget {
@@ -23,7 +23,7 @@ class StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.Border.all(color: color.withOpacity(0.6), width: 1.5),
+        border: Border.all(color: color.withOpacity(0.6), width: 1.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

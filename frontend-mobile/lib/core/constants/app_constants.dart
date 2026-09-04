@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 enum UserRole {
   citizen,
@@ -81,13 +81,39 @@ extension RiskTierExtension on RiskTier {
   String get label {
     switch (this) {
       case RiskTier.safe:
-        return 'SAFE';
+        return 'NORMAL — Safe';
+      case RiskTier.warning:
+        return 'WARNING — Attention Required';
+      case RiskTier.critical:
+        return 'CRITICAL — Immediate Attention';
+      case RiskTier.emergency:
+        return 'EMERGENCY — Immediate Action Required';
+    }
+  }
+
+  String get shortLabel {
+    switch (this) {
+      case RiskTier.safe:
+        return 'NORMAL';
       case RiskTier.warning:
         return 'WARNING';
       case RiskTier.critical:
         return 'CRITICAL';
       case RiskTier.emergency:
         return 'EMERGENCY';
+    }
+  }
+
+  String get actionDirective {
+    switch (this) {
+      case RiskTier.safe:
+        return 'Normal operation. Zero hazardous leakage detected.';
+      case RiskTier.warning:
+        return 'Attention required. Mild insulation degradation observed.';
+      case RiskTier.critical:
+        return 'Immediate attention. Lethal shock hazard under wet conditions.';
+      case RiskTier.emergency:
+        return 'Immediate safety action required! Catastrophic failure cutoff.';
     }
   }
 
@@ -119,9 +145,9 @@ extension RiskTierExtension on RiskTier {
 }
 
 class AppConstants {
-  static const String appName = 'Electric Pole Safety';
+  static const String appName = 'PoleGuard';
   static const String appTagline = 'AI & IoT Leakage Detection and Life Safety Platform';
-  static const String appVersion = '1.0.0 (Phase 1)';
+  static const String appVersion = '1.0.0';
 
   // Backend Defaults
   static const String defaultApiBaseUrl = 'http://10.0.2.2:8000/api/v1'; // Android Emulator
