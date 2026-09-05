@@ -1,4 +1,4 @@
-﻿name: pole_safety_mobile
+name: pole_safety_mobile
 description: "AI & IoT Based Electric Pole Leakage Detection and Life Safety Mobile Platform"
 publish_to: 'none'
 version: 1.0.0+1
@@ -17,6 +17,9 @@ dependencies:
   sqflite: ^2.3.3
   path_provider: ^2.1.3
   cupertino_icons: ^1.0.6
+  image_picker: ^1.1.2
+  geolocator: ^12.0.0
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:

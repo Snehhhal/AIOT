@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
 import '../core/utils/app_localizations.dart';
 import '../models/user_model.dart';
@@ -8,16 +10,26 @@ class AuthService extends ChangeNotifier {
   UserModel? _currentUser;
   AppLanguage _currentLanguage = AppLanguage.en;
   bool _isOffline = false;
+  UserRole _selectedRole = UserRole.citizen;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   UserModel? get currentUser => _currentUser;
   bool get isAuthenticated => _currentUser != null;
-  UserRole get currentRole => _currentUser?.role ?? UserRole.citizen;
+  UserRole get currentRole => _currentUser?.role ?? _selectedRole;
+  UserRole get selectedRole => _selectedRole;
   AppLanguage get currentLanguage => _currentLanguage;
   bool get isOffline => _isOffline;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
   AuthService() {
-    // Start with default demo user: Citizen for clean onboarding
-    _currentUser = null;
+    checkSavedSession();
+  }
+
+  void setSelectedRole(UserRole role) {
+    _selectedRole = role;
+    notifyListeners();
   }
 
   void setLanguage(AppLanguage lang) {
@@ -30,104 +42,155 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Restores session on app startup if JWT token exists in SharedPreferences
+  Future<void> checkSavedSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final userJson = prefs.getString('user_profile');
+
+      if (token != null && token.isNotEmpty && userJson != null) {
+        final decoded = jsonDecode(userJson) as Map<String, dynamic>;
+        _currentUser = UserModel.fromJson(decoded);
+        ApiClient.setAuthToken(token);
+        _selectedRole = _currentUser!.role;
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  /// Real authentication against FastAPI backend
   Future<bool> login(String email, String password) async {
-    // Standard credential check / demo fallback
-    UserRole assignedRole = UserRole.citizen;
-    String name = 'User';
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
 
-    if (email.contains('tech')) {
-      assignedRole = UserRole.technician;
-      name = AppConstants.demoTechnician['name']!;
-    } else if (email.contains('eng')) {
-      assignedRole = UserRole.engineer;
-      name = AppConstants.demoEngineer['name']!;
-    } else if (email.contains('auth')) {
-      assignedRole = UserRole.authority;
-      name = AppConstants.demoAuthority['name']!;
-    } else if (email.contains('admin')) {
-      assignedRole = UserRole.admin;
-      name = AppConstants.demoAdmin['name']!;
+    final result = await ApiClient.login(email.trim(), password);
+
+    _isLoading = false;
+    if (result['success'] == true) {
+      final data = result['data'] as Map<String, dynamic>;
+      final userMap = data['user'] as Map<String, dynamic>;
+      final token = data['access_token'] as String;
+
+      userMap['token'] = token;
+      _currentUser = UserModel.fromJson(userMap);
+      _selectedRole = _currentUser!.role;
+
+      // Persist to local storage
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', token);
+        await prefs.setString('user_profile', jsonEncode(_currentUser!.toJson()));
+      } catch (_) {}
+
+      notifyListeners();
+      return true;
     } else {
-      assignedRole = UserRole.citizen;
-      name = AppConstants.demoCitizen['name']!;
+      _errorMessage = result['error'] as String? ?? 'Login failed.';
+      notifyListeners();
+      return false;
     }
+  }
 
-    _currentUser = UserModel(
-      id: 'USR-${DateTime.now().millisecondsSinceEpoch}',
-      name: name,
-      email: email,
-      role: assignedRole,
-      zone: 'Sector 3 - Urban North',
-      token: 'mock-jwt-token-${assignedRole.id}',
+  /// Real registration against FastAPI backend
+  Future<bool> register({
+    required String email,
+    required String password,
+    required String fullName,
+    required String role,
+    String? zone,
+    String? staffAuthCode,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await ApiClient.register(
+      email: email.trim(),
+      password: password,
+      fullName: fullName.trim(),
+      role: role,
+      zone: zone,
+      staffAuthCode: staffAuthCode,
     );
 
-    ApiClient.setAuthToken(_currentUser!.token ?? '');
-    notifyListeners();
-    return true;
+    _isLoading = false;
+    if (result['success'] == true) {
+      final data = result['data'] as Map<String, dynamic>;
+      final userMap = data['user'] as Map<String, dynamic>;
+      final token = data['access_token'] as String;
+
+      userMap['token'] = token;
+      _currentUser = UserModel.fromJson(userMap);
+      _selectedRole = _currentUser!.role;
+
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', token);
+        await prefs.setString('user_profile', jsonEncode(_currentUser!.toJson()));
+      } catch (_) {}
+
+      notifyListeners();
+      return true;
+    } else {
+      _errorMessage = result['error'] as String? ?? 'Registration failed.';
+      notifyListeners();
+      return false;
+    }
   }
 
-  void quickDemoLogin(UserRole role) {
+  /// Request password reset verification code
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    return await ApiClient.forgotPassword(email.trim());
+  }
+
+  /// Reset password with token
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+  }) async {
+    return await ApiClient.resetPassword(
+      email: email.trim(),
+      token: token.trim(),
+      newPassword: newPassword,
+    );
+  }
+
+  /// Quick login for demonstrations with pre-seeded database accounts
+  Future<bool> quickDemoLogin(UserRole role) async {
+    String email = 'citizen@safety.org';
     switch (role) {
       case UserRole.citizen:
-        _currentUser = UserModel(
-          id: 'USR-CIT-01',
-          name: AppConstants.demoCitizen['name']!,
-          email: AppConstants.demoCitizen['email']!,
-          role: UserRole.citizen,
-          zone: 'Sector 4',
-          token: 'demo-token-citizen',
-        );
+        email = AppConstants.demoCitizen['email']!;
         break;
       case UserRole.technician:
-        _currentUser = UserModel(
-          id: 'USR-TECH-14',
-          name: AppConstants.demoTechnician['name']!,
-          email: AppConstants.demoTechnician['email']!,
-          role: UserRole.technician,
-          zone: 'Zone 1 & 2',
-          token: 'demo-token-technician',
-        );
+        email = AppConstants.demoTechnician['email']!;
         break;
       case UserRole.engineer:
-        _currentUser = UserModel(
-          id: 'USR-ENG-02',
-          name: AppConstants.demoEngineer['name']!,
-          email: AppConstants.demoEngineer['email']!,
-          role: UserRole.engineer,
-          zone: 'Sub-Division Central',
-          token: 'demo-token-engineer',
-        );
+        email = AppConstants.demoEngineer['email']!;
         break;
       case UserRole.authority:
-        _currentUser = UserModel(
-          id: 'USR-AUTH-01',
-          name: AppConstants.demoAuthority['name']!,
-          email: AppConstants.demoAuthority['email']!,
-          role: UserRole.authority,
-          zone: 'Municipal Circle',
-          token: 'demo-token-authority',
-        );
+        email = AppConstants.demoAuthority['email']!;
         break;
       case UserRole.admin:
-        _currentUser = UserModel(
-          id: 'USR-ADM-00',
-          name: AppConstants.demoAdmin['name']!,
-          email: AppConstants.demoAdmin['email']!,
-          role: UserRole.admin,
-          zone: 'All Distribution Zones',
-          token: 'demo-token-admin',
-        );
+        email = AppConstants.demoAdmin['email']!;
         break;
     }
-    if (_currentUser?.token != null) {
-      ApiClient.setAuthToken(_currentUser!.token!);
-    }
-    notifyListeners();
+
+    return await login(email, 'password123');
   }
 
-  void logout() {
+  /// Logs out user and clears persisted session
+  Future<void> logout() async {
     _currentUser = null;
     ApiClient.setAuthToken('');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_token');
+      await prefs.remove('user_profile');
+    } catch (_) {}
     notifyListeners();
   }
 }

@@ -1,6 +1,10 @@
+import os
+from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from backend.app.core.config import settings
 from backend.app.core.seed import seed_initial_data
 from backend.app.api.v1.auth import router as auth_router
@@ -11,6 +15,13 @@ from backend.app.api.v1.vision import router as vision_router
 from backend.app.api.v1.assistant import router as assistant_router
 from backend.app.api.v1.incidents import router as incidents_router
 from backend.app.api.v1.admin import router as admin_router
+from backend.app.api.v1.uploads import router as uploads_router
+from backend.app.api.v1.hazard_reports import router as hazard_reports_router
+from backend.app.core.websocket import ws_manager
+
+# Ensure upload directory exists
+UPLOAD_DIR = Path("backend/uploads")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @asynccontextmanager
@@ -46,6 +57,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Static file serving for uploaded photos
+app.mount("/uploads", StaticFiles(directory="backend/uploads"), name="uploads")
+
 # Include API v1 Routers
 app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(telemetry_router, prefix=settings.API_V1_STR)
@@ -55,10 +69,9 @@ app.include_router(vision_router, prefix=settings.API_V1_STR)
 app.include_router(assistant_router, prefix=settings.API_V1_STR)
 app.include_router(incidents_router, prefix=settings.API_V1_STR)
 app.include_router(admin_router, prefix=settings.API_V1_STR)
+app.include_router(uploads_router, prefix=settings.API_V1_STR)
+app.include_router(hazard_reports_router, prefix=settings.API_V1_STR)
 
-
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from backend.app.core.websocket import ws_manager
 
 @app.get("/health", tags=["Health"])
 @app.get(f"{settings.API_V1_STR}/health", tags=["Health"])

@@ -1,4 +1,4 @@
-﻿from typing import List
+from typing import List
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -52,6 +52,27 @@ async def get_current_user(
             detail="User account is deactivated",
         )
 
+    return user
+
+
+async def get_optional_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
+    db: AsyncSession = Depends(get_db)
+) -> User | None:
+    """Returns User if valid JWT is present, or None for guest/anonymous actions."""
+    if not credentials or not credentials.credentials:
+        return None
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    if not payload:
+        return None
+    user_id = payload.get("sub")
+    if not user_id:
+        return None
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user and not user.is_active:
+        return None
     return user
 
 

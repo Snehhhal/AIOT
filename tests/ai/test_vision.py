@@ -1,15 +1,22 @@
 import io
 import os
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
 from PIL import Image
 
 from backend.main import app
+from backend.app.core.seed import seed_initial_data
 from backend.app.schemas.telemetry import TelemetryIn
 from backend.app.services.decision_engine import decision_engine
 from ai.src.vision_detector import vision_detector
 
 client = TestClient(app)
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def ensure_db_ready():
+    await seed_initial_data()
 
 
 def test_vision_detector_synthetic_hazard_frame():

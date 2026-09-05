@@ -7,7 +7,10 @@ class PoleModel {
   final String location;
   final double latitude;
   final double longitude;
+  final String? address;
+  final String? area;
   final String zone;
+  final String? poleType;
   final String status; // HEALTHY, WARNING, CRITICAL, OFFLINE
   final double leakageCurrent; // mA
   final double voltage; // V
@@ -17,13 +20,15 @@ class PoleModel {
   final int healthScore; // 0 - 100
   final int riskScore; // 0 - 100
   final RiskTier riskTier;
+  final double? distanceMeters;
+  final double? distanceKm;
   final bool humanDetected;
   final bool animalDetected;
   final bool standingWaterDetected;
   final String? lastSeen;
   final bool isOnline;
 
-  String get locationName => location.isNotEmpty ? location : name;
+  String get locationName => (address != null && address!.isNotEmpty) ? address! : (location.isNotEmpty ? location : name);
 
   const PoleModel({
     required this.id,
@@ -32,7 +37,10 @@ class PoleModel {
     required this.location,
     required this.latitude,
     required this.longitude,
+    this.address,
+    this.area,
     required this.zone,
+    this.poleType = "DISTRIBUTION",
     this.status = "HEALTHY",
     this.leakageCurrent = 2.1,
     this.voltage = 230.0,
@@ -42,6 +50,8 @@ class PoleModel {
     this.healthScore = 95,
     this.riskScore = 5,
     this.riskTier = RiskTier.safe,
+    this.distanceMeters,
+    this.distanceKm,
     this.humanDetected = false,
     this.animalDetected = false,
     this.standingWaterDetected = false,
@@ -71,11 +81,16 @@ class PoleModel {
       location: json['name'] ?? 'Distribution Node',
       latitude: (json['latitude'] as num?)?.toDouble() ?? 18.5204,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 73.8567,
+      address: json['address'] as String?,
+      area: json['area'] as String?,
       zone: json['zone'] ?? 'Sector 1',
+      poleType: json['pole_type'] as String? ?? 'DISTRIBUTION',
       status: statusStr,
       healthScore: (json['health_score'] as num?)?.toInt() ?? 95,
       riskScore: riskScoreVal,
       riskTier: tier,
+      distanceMeters: (json['distance_meters'] as num?)?.toDouble(),
+      distanceKm: (json['distance_km'] as num?)?.toDouble(),
       leakageCurrent: latestReading != null ? (latestReading['leakage_current'] as num).toDouble() : (json['leakage_current'] as num?)?.toDouble() ?? 2.1,
       voltage: latestReading != null ? (latestReading['voltage'] as num).toDouble() : (json['voltage'] as num?)?.toDouble() ?? 230.0,
       temperature: latestReading != null ? (latestReading['temperature'] as num).toDouble() : (json['temperature'] as num?)?.toDouble() ?? 28.0,
@@ -99,6 +114,8 @@ class PoleModel {
     int? healthScore,
     int? riskScore,
     RiskTier? riskTier,
+    double? distanceMeters,
+    double? distanceKm,
     bool? humanDetected,
     bool? animalDetected,
     bool? standingWaterDetected,
@@ -111,7 +128,10 @@ class PoleModel {
       location: location,
       latitude: latitude,
       longitude: longitude,
+      address: address,
+      area: area,
       zone: zone,
+      poleType: poleType,
       status: status ?? this.status,
       leakageCurrent: leakageCurrent ?? this.leakageCurrent,
       voltage: voltage ?? this.voltage,
@@ -121,6 +141,8 @@ class PoleModel {
       healthScore: healthScore ?? this.healthScore,
       riskScore: riskScore ?? this.riskScore,
       riskTier: riskTier ?? this.riskTier,
+      distanceMeters: distanceMeters ?? this.distanceMeters,
+      distanceKm: distanceKm ?? this.distanceKm,
       humanDetected: humanDetected ?? this.humanDetected,
       animalDetected: animalDetected ?? this.animalDetected,
       standingWaterDetected: standingWaterDetected ?? this.standingWaterDetected,

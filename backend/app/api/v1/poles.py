@@ -1,6 +1,7 @@
-﻿from datetime import datetime, timezone, timedelta
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+import math
+from datetime import datetime, timezone, timedelta
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from backend.app.core.database import get_db
@@ -27,6 +28,21 @@ def _calculate_connectivity(last_heartbeat: datetime | None) -> str:
     return "ONLINE" if (now - last_heartbeat) < timedelta(minutes=15) else "OFFLINE"
 
 
+def _haversine_distance_meters(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculates spherical distance between two GPS coordinates in meters."""
+    r = 6371000.0  # Earth radius in meters
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+
+    a = math.sin(delta_phi / 2.0) ** 2 + \
+        math.cos(phi1) * math.cos(phi2) * \
+        math.sin(delta_lambda / 2.0) ** 2
+    c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+    return r * c
+
+
 @router.get("", response_model=dict, summary="List All Registered Electric Poles")
 async def list_poles(db: AsyncSession = Depends(get_db)):
     """Fetches all electric poles along with their latest sensor readings and connectivity."""
@@ -35,7 +51,6 @@ async def list_poles(db: AsyncSession = Depends(get_db)):
 
     pole_list = []
     for p in poles:
-        # Fetch latest reading for this pole
         r_result = await db.execute(
             select(SensorReading)
             .where(SensorReading.pole_id == p.id)
@@ -50,7 +65,10 @@ async def list_poles(db: AsyncSession = Depends(get_db)):
             "name": p.name,
             "latitude": p.latitude,
             "longitude": p.longitude,
+            "address": getattr(p, "address", None) or f"{p.zone}, Municipal Grid",
+            "area": getattr(p, "area", None) or p.zone,
             "zone": p.zone,
+            "pole_type": getattr(p, "pole_type", "DISTRIBUTION"),
             "status": p.status,
             "health_score": p.health_score,
             "risk_score": p.risk_score,
@@ -67,6 +85,69 @@ async def list_poles(db: AsyncSession = Depends(get_db)):
         "count": len(pole_list),
         "data": pole_list,
         "message": "Poles fetched successfully"
+    }
+
+
+@router.get("/nearby", response_model=dict, summary="Find Registered Poles Near GPS Location")
+async def get_nearby_poles(
+    latitude: float = Query(..., description="Current device GPS latitude"),
+    longitude: float = Query(..., description="Current device GPS longitude"),
+    radius_km: float = Query(10.0, ge=0.1, le=100.0, description="Search radius in kilometers"),
+    limit: int = Query(20, ge=1, le=100, description="Max poles to return"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Finds registered utility poles within radius of the user's GPS coordinates using Haversine formula.
+    Includes distance in meters, live safety score, risk classification, and latest telemetry.
+    """
+    result = await db.execute(select(Pole).where(Pole.is_active == True))
+    all_poles = result.scalars().all()
+
+    radius_meters = radius_km * 1000.0
+    scored_poles = []
+
+    for p in all_poles:
+        dist_m = _haversine_distance_meters(latitude, longitude, p.latitude, p.longitude)
+        if dist_m <= radius_meters:
+            r_result = await db.execute(
+                select(SensorReading)
+                .where(SensorReading.pole_id == p.id)
+                .order_by(desc(SensorReading.recorded_at))
+                .limit(1)
+            )
+            latest_reading = r_result.scalar_one_or_none()
+
+            scored_poles.append({
+                "id": p.id,
+                "serial_number": p.serial_number,
+                "name": p.name,
+                "latitude": p.latitude,
+                "longitude": p.longitude,
+                "address": getattr(p, "address", None) or f"{p.zone}, Municipal Grid",
+                "area": getattr(p, "area", None) or p.zone,
+                "zone": p.zone,
+                "pole_type": getattr(p, "pole_type", "DISTRIBUTION"),
+                "status": p.status,
+                "health_score": p.health_score,
+                "risk_score": p.risk_score,
+                "distance_meters": round(dist_m, 1),
+                "distance_km": round(dist_m / 1000.0, 2),
+                "connectivity": _calculate_connectivity(p.last_heartbeat),
+                "last_heartbeat": p.last_heartbeat,
+                "latest_reading": SensorReadingOut.model_validate(latest_reading) if latest_reading else None,
+            })
+
+    # Sort by physical distance ascending
+    scored_poles.sort(key=lambda x: x["distance_meters"])
+    selected_poles = scored_poles[:limit]
+
+    return {
+        "success": True,
+        "query_location": {"latitude": latitude, "longitude": longitude},
+        "search_radius_km": radius_km,
+        "count": len(selected_poles),
+        "data": selected_poles,
+        "message": f"Found {len(selected_poles)} registered utility poles within {radius_km} km."
     }
 
 
@@ -95,7 +176,10 @@ async def get_pole(pole_id: str, db: AsyncSession = Depends(get_db)):
         "name": pole.name,
         "latitude": pole.latitude,
         "longitude": pole.longitude,
+        "address": getattr(pole, "address", None) or f"{pole.zone}, Municipal Grid",
+        "area": getattr(pole, "area", None) or pole.zone,
         "zone": pole.zone,
+        "pole_type": getattr(pole, "pole_type", "DISTRIBUTION"),
         "status": pole.status,
         "health_score": pole.health_score,
         "risk_score": pole.risk_score,
@@ -179,7 +263,6 @@ async def get_pole_history(
         .limit(limit)
     )
     readings = result.scalars().all()
-    # Reverse to chronological order (earliest to latest) for charts
     ordered = [SensorReadingOut.model_validate(r).model_dump() for r in reversed(readings)]
 
     return {

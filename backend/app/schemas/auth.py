@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -9,11 +9,22 @@ class UserRegisterIn(BaseModel):
     full_name: str = Field(..., min_length=2)
     role: str = Field(default="CITIZEN", description="CITIZEN, TECHNICIAN, ENGINEER, AUTHORITY, ADMIN")
     zone: Optional[str] = "Sector 1"
+    staff_auth_code: Optional[str] = Field(None, description="Department authorization code required for Staff roles")
 
 
 class UserLoginIn(BaseModel):
     email: str
     password: str
+
+
+class ForgotPasswordIn(BaseModel):
+    email: str = Field(..., description="Registered email address")
+
+
+class ResetPasswordIn(BaseModel):
+    email: str = Field(..., description="Registered email address")
+    token: str = Field(..., description="Reset verification code/token")
+    new_password: str = Field(..., min_length=6, description="New secure password")
 
 
 class UserOut(BaseModel):

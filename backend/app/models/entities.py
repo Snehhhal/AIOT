@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 from sqlalchemy import Column, String, Float, Integer, Boolean, DateTime, Text, ForeignKey
 from backend.app.core.database import Base
 
@@ -24,13 +24,19 @@ class Pole(Base):
     name = Column(String(128), nullable=False)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
+    address = Column(String(256), nullable=True)
+    area = Column(String(128), nullable=True)
     zone = Column(String(64), nullable=False, default="Sector 1")
+    pole_type = Column(String(64), default="DISTRIBUTION") # DISTRIBUTION, TRANSMISSION, FEEDER
     status = Column(String(32), default="HEALTHY") # HEALTHY, WARNING, CRITICAL, OFFLINE
     health_score = Column(Integer, default=95)     # 0 - 100
     risk_score = Column(Integer, default=5)         # 0 - 100
     is_active = Column(Boolean, default=True)
+    installation_date = Column(DateTime, nullable=True)
+    last_inspection_date = Column(DateTime, nullable=True)
     last_heartbeat = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class SensorReading(Base):
@@ -94,3 +100,36 @@ class AuditLog(Base):
     target_entity = Column(String(64), nullable=True) # e.g. Pole P-001, Incident INC-101
     details = Column(Text, nullable=True)
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class HazardReport(Base):
+    __tablename__ = "hazard_reports"
+
+    id = Column(String(36), primary_key=True, index=True) # e.g. "REP-000124"
+    reporter_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    reporter_name = Column(String(128), nullable=True)
+    reporter_phone = Column(String(32), nullable=True)
+    pole_id = Column(String(32), ForeignKey("poles.id"), nullable=True)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    address = Column(String(256), nullable=True)
+    hazard_type = Column(String(64), nullable=False) # e.g. "Electrical leakage suspicion", "Damaged pole", "Broken wire", "Sparking", "Water near electrical pole", "Fallen wire", "Fire/smoke", "Human/animal danger", "Other"
+    description = Column(Text, nullable=False)
+    image_url = Column(String(512), nullable=True)
+    status = Column(String(32), default="REPORTED") # REPORTED -> UNDER_REVIEW -> VERIFIED / REJECTED -> ASSIGNED -> ACKNOWLEDGED -> IN_PROGRESS -> RESOLVED -> CLOSED
+    assigned_technician_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    inspection_notes = Column(Text, nullable=True)
+    inspection_image_url = Column(String(512), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class PasswordReset(Base):
+    __tablename__ = "password_resets"
+
+    id = Column(String(36), primary_key=True, index=True)
+    email = Column(String(128), index=True, nullable=False)
+    token = Column(String(64), index=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    is_used = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

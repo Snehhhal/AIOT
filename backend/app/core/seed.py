@@ -1,13 +1,13 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from backend.app.core.database import engine, Base, AsyncSessionLocal
 from backend.app.core.security import hash_password
-from backend.app.models.entities import User, Pole, SensorReading, Incident, Alert
+from backend.app.models.entities import User, Pole, SensorReading, Incident, Alert, HazardReport, PasswordReset, WorkOrder, AuditLog
 
 
 async def seed_initial_data():
-    """Initializes schema tables and seeds default demo accounts & poles."""
+    """Initializes schema tables and seeds default demo accounts, poles & hazard reports."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -62,7 +62,7 @@ async def seed_initial_data():
             db.add_all(users)
             await db.commit()
 
-        # 2. Seed Poles (P-001 through P-004)
+        # 2. Seed Poles (P-001 through P-004) with real location details
         existing_poles = await db.execute(select(Pole))
         if not existing_poles.scalars().first():
             print("[*] Seeding infrastructure utility poles P-001 to P-004...")
@@ -73,8 +73,15 @@ async def seed_initial_data():
                     name="MG Road - Junction 4",
                     latitude=18.5204,
                     longitude=73.8567,
+                    address="MG Road, Near Central Library, Junction 4",
+                    area="Pune Cantonment",
                     zone="Sector 4",
+                    pole_type="DISTRIBUTION",
                     status="CRITICAL",
+                    health_score=42,
+                    risk_score=88,
+                    installation_date=datetime(2021, 5, 12, tzinfo=timezone.utc),
+                    last_inspection_date=datetime.now(timezone.utc) - timedelta(days=5),
                     last_heartbeat=datetime.now(timezone.utc),
                 ),
                 Pole(
@@ -83,8 +90,15 @@ async def seed_initial_data():
                     name="FC Road - Near Metro Station",
                     latitude=18.5280,
                     longitude=73.8420,
+                    address="Fergusson College Road, Opp Metro Gate 2",
+                    area="Shivajinagar",
                     zone="Sector 1",
+                    pole_type="DISTRIBUTION",
                     status="WARNING",
+                    health_score=68,
+                    risk_score=45,
+                    installation_date=datetime(2022, 8, 19, tzinfo=timezone.utc),
+                    last_inspection_date=datetime.now(timezone.utc) - timedelta(days=12),
                     last_heartbeat=datetime.now(timezone.utc),
                 ),
                 Pole(
@@ -93,8 +107,15 @@ async def seed_initial_data():
                     name="Station Road - East Zone",
                     latitude=18.5312,
                     longitude=73.8745,
+                    address="Pune Station Road, Near Platform 1 Feeder",
+                    area="Railway Circle",
                     zone="Sector 2",
+                    pole_type="FEEDER",
                     status="HEALTHY",
+                    health_score=94,
+                    risk_score=8,
+                    installation_date=datetime(2023, 2, 10, tzinfo=timezone.utc),
+                    last_inspection_date=datetime.now(timezone.utc) - timedelta(days=2),
                     last_heartbeat=datetime.now(timezone.utc),
                 ),
                 Pole(
@@ -103,8 +124,15 @@ async def seed_initial_data():
                     name="Kothrud Market Center",
                     latitude=18.5074,
                     longitude=73.8077,
+                    address="Paud Road, Near Shivaji Statue Center",
+                    area="Kothrud",
                     zone="Sector 3",
+                    pole_type="DISTRIBUTION",
                     status="HEALTHY",
+                    health_score=96,
+                    risk_score=5,
+                    installation_date=datetime(2023, 11, 24, tzinfo=timezone.utc),
+                    last_inspection_date=datetime.now(timezone.utc) - timedelta(days=1),
                     last_heartbeat=datetime.now(timezone.utc),
                 ),
             ]
@@ -116,7 +144,6 @@ async def seed_initial_data():
         existing_readings = await db.execute(select(SensorReading))
         if not existing_readings.scalars().first():
             print("[*] Seeding 24-hour time-series sensor telemetry for P-001 through P-004...")
-            from datetime import timedelta
             now = datetime.now(timezone.utc)
             readings = []
 
@@ -193,3 +220,48 @@ async def seed_initial_data():
             db.add_all(readings)
             await db.commit()
             print(f"[+] Successfully seeded {len(readings)} historical sensor readings.")
+
+        # 4. Seed Initial Citizen Hazard Reports if empty
+        existing_reports = await db.execute(select(HazardReport))
+        if not existing_reports.scalars().first():
+            print("[*] Seeding sample citizen hazard reports...")
+            now = datetime.now(timezone.utc)
+            sample_reports = [
+                HazardReport(
+                    id="REP-000101",
+                    reporter_id="USR-CIT-01",
+                    reporter_name="Rahul Sharma",
+                    reporter_phone="+91-9876543210",
+                    pole_id="P-001",
+                    latitude=18.5206,
+                    longitude=73.8569,
+                    address="MG Road, Corner opposite State Bank",
+                    hazard_type="Electrical leakage suspicion",
+                    description="Tingling sensation felt when touching metal bus stop railing adjacent to Pole P-001 during light rain.",
+                    image_url=None,
+                    status="UNDER_REVIEW",
+                    created_at=now - timedelta(hours=3),
+                    updated_at=now - timedelta(hours=2),
+                ),
+                HazardReport(
+                    id="REP-000102",
+                    reporter_id="USR-CIT-01",
+                    reporter_name="Pooja Deshmukh",
+                    reporter_phone="+91-9822011223",
+                    pole_id="P-002",
+                    latitude=18.5283,
+                    longitude=73.8423,
+                    address="FC Road near Cafe GoodLuck",
+                    hazard_type="Sparking",
+                    description="Occasional bright sparks visible at top cross-arm insulator bracket.",
+                    image_url=None,
+                    status="ASSIGNED",
+                    assigned_technician_id="USR-TECH-14",
+                    inspection_notes="Assigned to Lineman Kailas Jadhav for priority morning inspection.",
+                    created_at=now - timedelta(hours=6),
+                    updated_at=now - timedelta(hours=1),
+                )
+            ]
+            db.add_all(sample_reports)
+            await db.commit()
+            print(f"[+] Successfully seeded sample citizen hazard reports.")

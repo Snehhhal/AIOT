@@ -7,7 +7,7 @@
 [![ESP32](https://img.shields.io/badge/IoT-ESP32%20Failsafe-E7352C.svg)](https://www.espressif.com/en/products/socs/esp32)
 [![Scikit-Learn](https://img.shields.io/badge/AI-Random%20Forest-F7931E.svg?logo=scikit-learn)](https://scikit-learn.org)
 [![ChromaDB](https://img.shields.io/badge/RAG-ChromaDB-blue.svg)](https://www.trychroma.com)
-[![Tests](https://img.shields.io/badge/Tests-54%2F54%20Passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-60%2F60%20Passed-brightgreen.svg)]()
 
 > **Final-Year B.Tech Capstone Engineering Project**  
 > **Department of Computer Engineering**  
@@ -15,16 +15,29 @@
 
 ---
 
+## 📚 Technical Architecture & Verification Blueprints
+
+| Specification Document | Focus Area & Description |
+| :--- | :--- |
+| 🛡️ [**ROLE_FEATURE_MATRIX.md**](ROLE_FEATURE_MATRIX.md) | Granular comparative matrix of all 5 roles (`CITIZEN`, `TECHNICIAN`, `ENGINEER`, `AUTHORITY`, `ADMIN`), permissions, and staff key authorization. |
+| 🔄 [**REAL_DATA_FLOW.md**](REAL_DATA_FLOW.md) | End-to-end data lifecycle: GPS Haversine discovery, camera multipart upload, multi-state hazard report machine, and WebSocket streaming. |
+| 🏛️ [**SYSTEM_ARCHITECTURE.md**](SYSTEM_ARCHITECTURE.md) | Layered topology, 9 relational database tables, AI/CV cross-modal fusion, and ChromaDB vector store. |
+| 🔬 [**DEMO_VS_REAL_MODE.md**](DEMO_VS_REAL_MODE.md) | Transparent explanation of the MOCK IoT Simulator layer vs Future Physical ESP32 connection (100% identical JSON schema). |
+| 📡 [**API_DOCUMENTATION.md**](API_DOCUMENTATION.md) | Comprehensive RESTful API endpoint specifications across all 10 route modules. |
+| 📸 [**PHOTO_UPLOAD_FLOW.md**](PHOTO_UPLOAD_FLOW.md) | Camera & gallery photo evidence capture, MIME/size validation, local filesystem storage, and database tracking. |
+
+---
+
 ## ⚡ Instant 1-Click Launch in ANY Workspace
 
-Anyone (examiners, professors, classmates, or developers) can clone and run PoleGuard immediately on **ANY computer** (Windows, Mac, Linux, or Mobile Phone):
+Anyone (examiners, professors, classmates, or evaluators) can run PoleGuard immediately on **ANY computer** (Windows, Mac, Linux):
 
 ### Option 1: Live Interactive Mobile App (Zero Installation Needed)
-* Simply open [`index.html`](index.html) or [`app_preview.html`](app_preview.html) in any web browser (Chrome, Edge, Safari, Firefox).
-* Runs the complete 5-role mobile application with interactive sensor charts, emergency fault triggers, and the RAG safety assistant!
+* Simply open [`index.html`](index.html) or [`app_preview.html`](app_preview.html) in any modern web browser.
+* Features the complete startup sequence (Splash ➔ Welcome ➔ Role Select ➔ Login/Signup ➔ Dashboard), live camera upload simulation, GPS toggle, and all 5 role journeys!
 
 ### Option 2: 1-Click Full-Stack Launcher (FastAPI Backend + Mobile App)
-* **On Windows**: Double-click [`run.bat`](run.bat) (automatically configures Python venv, starts FastAPI backend on `http://localhost:8000`, and launches the mobile app in your browser).
+* **On Windows**: Double-click [`run.bat`](run.bat) (automatically boots virtualenv, starts FastAPI backend on `http://localhost:8000`, and opens the app in your browser).
 * **On macOS / Linux**: Run `./run.sh` in your terminal.
 * **Via Docker**: Run `docker compose up --build`
 
@@ -242,10 +255,23 @@ Every commit to `main` undergoes exhaustive automated testing covering every tie
 pytest tests/ -v -o pythonpath=.
 ```
 
-**Results: 54 / 54 Passed (100% Pass Rate)**
-- **AI / ML & Vision**: 11 passed (Classifier inference, edge cases, synthetic hazard frame, cross-modal decision surge).
+**Results: 60 / 60 Passed (100% Pass Rate)**
+- **AI / ML & Vision**: 11 passed (Random Forest classifier, synthetic hazard frames, cross-modal decision surge, vision inspection API).
 - **Backend & Telemetry**: 22 passed (PBKDF2 auth, JWT tokens, pole asset CRUD, WebSocket broadcast, simulator scenarios).
+- **Phase 11 Platform Upgrades**: 6 passed (Nearby poles Haversine distance, multipart photo uploads, hazard report multi-state machine, staff key protection, password reset token flow).
 - **Integration & E2E Scenarios**: 14 passed (Scenarios A through F, full 5-role journeys, 403 Forbidden security checks).
 - **RAG Safety Assistant**: 7 passed (Vector embeddings, markdown SOP parser, ChromaDB retrieval, safety synthesis).
 
-For complete technical specifications, review [`TEST_REPORT.md`](file:///C:/Users/LENOV/OneDrive/Desktop/AIOT/TEST_REPORT.md) and [`DEMO_GUIDE.md`](file:///C:/Users/LENOV/OneDrive/Desktop/AIOT/DEMO_GUIDE.md).
+---
+
+## 9. Evaluation & Viva Credentials Cheat Sheet
+
+| Role | Email | Default Password | Staff Key (If Registering New) |
+| :--- | :--- | :--- | :--- |
+| **Citizen** | `citizen@poleguard.internal` | `password123` | *None (Public Registration)* |
+| **Technician** | `tech14@poleguard.internal` | `password123` | `POLEGUARD-SECURE-2026` |
+| **Engineer** | `engineer@poleguard.internal` | `password123` | `POLEGUARD-SECURE-2026` |
+| **Authority** | `authority@poleguard.internal` | `password123` | `POLEGUARD-SECURE-2026` |
+| **Admin** | `admin@poleguard.internal` | `password123` | `POLEGUARD-SECURE-2026` |
+
+For complete technical specifications, review [`TEST_REPORT.md`](TEST_REPORT.md), [`DEMO_GUIDE.md`](DEMO_GUIDE.md), and [`ROLE_FEATURE_MATRIX.md`](ROLE_FEATURE_MATRIX.md).

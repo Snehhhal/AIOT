@@ -1,14 +1,32 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/auth_service.dart';
-import '../../admin/screens/admin_home_screen.dart';
-import '../../authority/screens/authority_home_screen.dart';
+
 import '../../citizen/screens/citizen_home_screen.dart';
-import '../../common/widgets/connectivity_banner.dart';
-import '../../engineer/screens/engineer_home_screen.dart';
+import '../../citizen/screens/citizen_report_screen.dart';
+import '../../citizen/screens/citizen_reports_screen.dart';
+import '../../citizen/screens/citizen_chat_screen.dart';
+
 import '../../technician/screens/technician_home_screen.dart';
+import '../../technician/screens/technician_incidents_screen.dart';
+import '../../technician/screens/technician_work_screen.dart';
+
+import '../../engineer/screens/engineer_home_screen.dart';
+import '../../engineer/screens/engineer_poles_screen.dart';
+import '../../engineer/screens/engineer_incidents_screen.dart';
+
+import '../../authority/screens/authority_home_screen.dart';
+import '../../authority/screens/authority_escalations_screen.dart';
+import '../../authority/screens/authority_zones_screen.dart';
+
+import '../../admin/screens/admin_home_screen.dart';
+import '../../admin/screens/admin_users_screen.dart';
+import '../../admin/screens/admin_audit_screen.dart';
+
+import '../../common/screens/profile_screen.dart';
+import '../../common/widgets/connectivity_banner.dart';
 
 class RoleShellScreen extends StatefulWidget {
   const RoleShellScreen({super.key});
@@ -23,47 +41,37 @@ class _RoleShellScreenState extends State<RoleShellScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
-    final user = auth.currentUser;
     final role = auth.currentRole;
+
+    final pages = _getPagesForRole(role);
+    final clampedIndex = _currentIndex.clamp(0, pages.length - 1);
 
     return Scaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              AppConstants.appName,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            const Text(AppConstants.appName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             Row(
               children: [
                 Icon(role.icon, size: 12, color: role.roleColor),
                 const SizedBox(width: 4),
                 Text(
                   role.displayName.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: role.roleColor,
-                    letterSpacing: 0.5,
-                  ),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: role.roleColor, letterSpacing: 0.5),
                 ),
               ],
             ),
           ],
         ),
         actions: [
-          // Quick Role Switcher Button (Viva & Demo essential)
           TextButton.icon(
             style: TextButton.styleFrom(
               backgroundColor: role.roleColor.withOpacity(0.15),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             ),
             icon: Icon(Icons.swap_horiz_rounded, size: 16, color: role.roleColor),
-            label: Text(
-              'Switch Role',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: role.roleColor),
-            ),
+            label: Text('Switch Role', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: role.roleColor)),
             onPressed: () => _showRoleSwitchModal(context, auth),
           ),
           IconButton(
@@ -77,71 +85,111 @@ class _RoleShellScreenState extends State<RoleShellScreen> {
       body: Column(
         children: [
           const ConnectivityBanner(),
-          Expanded(child: _buildRoleHome(role)),
+          Expanded(child: pages[clampedIndex]),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(role),
+      bottomNavigationBar: _buildBottomNav(role, clampedIndex),
     );
   }
 
-  Widget _buildRoleHome(UserRole role) {
+  List<Widget> _getPagesForRole(UserRole role) {
     switch (role) {
       case UserRole.citizen:
-        return const CitizenHomeScreen();
+        return const [
+          CitizenHomeScreen(),
+          CitizenReportsScreen(),
+          CitizenReportScreen(),
+          CitizenChatScreen(),
+          ProfileScreen(),
+        ];
       case UserRole.technician:
-        return const TechnicianHomeScreen();
+        return const [
+          TechnicianHomeScreen(),
+          TechnicianIncidentsScreen(),
+          TechnicianWorkScreen(),
+          CitizenChatScreen(),
+          ProfileScreen(),
+        ];
       case UserRole.engineer:
-        return const EngineerHomeScreen();
+        return const [
+          EngineerHomeScreen(),
+          EngineerPolesScreen(),
+          EngineerIncidentsScreen(),
+          CitizenChatScreen(),
+          ProfileScreen(),
+        ];
       case UserRole.authority:
-        return const AuthorityHomeScreen();
+        return const [
+          AuthorityHomeScreen(),
+          AuthorityEscalationsScreen(),
+          AuthorityZonesScreen(),
+          AdminAuditScreen(),
+          ProfileScreen(),
+        ];
       case UserRole.admin:
-        return const AdminHomeScreen();
+        return const [
+          AdminHomeScreen(),
+          EngineerPolesScreen(),
+          AdminUsersScreen(),
+          AdminAuditScreen(),
+          ProfileScreen(),
+        ];
     }
   }
 
-  Widget _buildBottomNav(UserRole role) {
+  Widget _buildBottomNav(UserRole role, int currentIndex) {
     List<BottomNavigationBarItem> items = [];
 
     switch (role) {
       case UserRole.citizen:
         items = const [
           BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Safety Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.report_problem_rounded), label: 'Reports'),
+          BottomNavigationBarItem(icon: Icon(Icons.list_alt_rounded), label: 'My Reports'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_a_photo_rounded), label: 'Report Hazard'),
           BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Assistant'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
         ];
         break;
       case UserRole.technician:
         items = const [
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Overview'),
           BottomNavigationBarItem(icon: Icon(Icons.assignment_rounded), label: 'Incidents'),
-          BottomNavigationBarItem(icon: Icon(Icons.build_rounded), label: 'Work Orders'),
-          BottomNavigationBarItem(icon: Icon(Icons.sync_rounded), label: 'Offline Sync'),
+          BottomNavigationBarItem(icon: Icon(Icons.handyman_rounded), label: 'Work Orders'),
+          BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'SOP Guide'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
         ];
         break;
       case UserRole.engineer:
         items = const [
           BottomNavigationBarItem(icon: Icon(Icons.analytics_rounded), label: 'Fleet Health'),
-          BottomNavigationBarItem(icon: Icon(Icons.warning_amber_rounded), label: 'Incidents'),
+          BottomNavigationBarItem(icon: Icon(Icons.electrical_services_rounded), label: 'Poles'),
+          BottomNavigationBarItem(icon: Icon(Icons.alt_route_rounded), label: 'Dispatch'),
           BottomNavigationBarItem(icon: Icon(Icons.psychology_rounded), label: 'AI Anomaly'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
         ];
         break;
       case UserRole.authority:
         items = const [
           BottomNavigationBarItem(icon: Icon(Icons.shield_outlined), label: 'Zone Safety'),
           BottomNavigationBarItem(icon: Icon(Icons.priority_high_rounded), label: 'Escalations'),
+          BottomNavigationBarItem(icon: Icon(Icons.map_rounded), label: 'Risk Zones'),
           BottomNavigationBarItem(icon: Icon(Icons.assessment_outlined), label: 'Audit Logs'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
         ];
         break;
       case UserRole.admin:
         items = const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Platform'),
-          BottomNavigationBarItem(icon: Icon(Icons.play_arrow_rounded), label: 'Demo Control'),
-          BottomNavigationBarItem(icon: Icon(Icons.tune_rounded), label: 'Settings'),
+          BottomNavigationBarItem(icon: Icon(Icons.electrical_services_rounded), label: 'Poles'),
+          BottomNavigationBarItem(icon: Icon(Icons.group_rounded), label: 'Users'),
+          BottomNavigationBarItem(icon: Icon(Icons.security_rounded), label: 'Audit Logs'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
         ];
         break;
     }
 
     return BottomNavigationBar(
-      currentIndex: _currentIndex.clamp(0, items.length - 1),
+      currentIndex: currentIndex,
       backgroundColor: AppTheme.surfaceDark,
       selectedItemColor: role.roleColor,
       unselectedItemColor: AppTheme.textSecondary,
@@ -169,15 +217,9 @@ class _RoleShellScreenState extends State<RoleShellScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Demo Role Switcher',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-              ),
+              const Text('Demo Role Switcher', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
               const SizedBox(height: 4),
-              const Text(
-                'Select any of the 5 supported roles to test role-based UI and access control:',
-                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-              ),
+              const Text('Select any role to test dynamic role-based UI and access control:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
               const SizedBox(height: 16),
               ...UserRole.values.map((r) {
                 final isCurrent = r == auth.currentRole;
@@ -188,15 +230,13 @@ class _RoleShellScreenState extends State<RoleShellScreen> {
                   ),
                   title: Text(
                     r.displayName,
-                    style: TextStyle(
-                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                      color: isCurrent ? r.roleColor : AppTheme.textPrimary,
-                    ),
+                    style: TextStyle(fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal, color: isCurrent ? r.roleColor : AppTheme.textPrimary),
                   ),
                   subtitle: Text('Role ID: ${r.id}', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
                   trailing: isCurrent ? Icon(Icons.check_circle, color: r.roleColor, size: 20) : null,
                   onTap: () {
                     auth.quickDemoLogin(r);
+                    setState(() => _currentIndex = 0);
                     Navigator.pop(ctx);
                   },
                 );

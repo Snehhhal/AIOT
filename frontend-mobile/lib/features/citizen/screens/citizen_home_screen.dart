@@ -3,26 +3,75 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_localizations.dart';
+import '../../../models/pole_model.dart';
+import '../../../services/api_client.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/location_service.dart';
 import '../../../services/pole_provider.dart';
 import '../../common/widgets/status_badge.dart';
 import '../../monitoring/screens/pole_detail_screen.dart';
+import 'citizen_report_screen.dart';
 
-class CitizenHomeScreen extends StatelessWidget {
+class CitizenHomeScreen extends StatefulWidget {
   const CitizenHomeScreen({super.key});
+
+  @override
+  State<CitizenHomeScreen> createState() => _CitizenHomeScreenState();
+}
+
+class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
+  List<PoleModel> _nearbyPoles = [];
+  bool _isLoadingNearby = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadNearby();
+    });
+  }
+
+  Future<void> _loadNearby() async {
+    final locationService = Provider.of<LocationService>(context, listen: false);
+    setState(() => _isLoadingNearby = true);
+    try {
+      final poles = await ApiClient.getNearbyPoles(
+        latitude: locationService.effectiveLatitude,
+        longitude: locationService.effectiveLongitude,
+        radiusKm: 15.0,
+      );
+      if (mounted) {
+        setState(() {
+          _nearbyPoles = poles;
+          _isLoadingNearby = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingNearby = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
     final poleProvider = Provider.of<PoleProvider>(context);
+    final locationService = Provider.of<LocationService>(context);
     final loc = AppLocalizations(auth.currentLanguage);
-    final nearestPole = poleProvider.selectedPole;
+    final nearestPole = _nearbyPoles.isNotEmpty
+        ? _nearbyPoles.first
+        : (poleProvider.selectedPole ?? (poleProvider.poles.isNotEmpty ? poleProvider.poles.first : null));
 
     final riskTier = nearestPole?.riskTier ?? RiskTier.safe;
     final isDanger = riskTier == RiskTier.emergency || riskTier == RiskTier.critical;
     final statusColor = riskTier.color;
 
-    return SingleChildScrollView(
+    return RefreshIndicator(
+      onRefresh: () async {
+        await poleProvider.loadPoles();
+        await _loadNearby();
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,14 +91,22 @@ class CitizenHomeScreen extends StatelessWidget {
                       color: AppTheme.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 14, color: AppTheme.infoColor),
+                      Icon(
+                        locationService.isTestLocationMode ? Icons.science_outlined : Icons.my_location_rounded,
+                        size: 13,
+                        color: locationService.isTestLocationMode ? AppTheme.warningColor : AppTheme.infoColor,
+                      ),
                       const SizedBox(width: 4),
                       Text(
-                        'Near ${nearestPole?.name ?? "FC Road"} • GPS Active',
-                        style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                        locationService.locationSourceLabel,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: locationService.isTestLocationMode ? AppTheme.warningColor : AppTheme.textSecondary,
+                          fontWeight: locationService.isTestLocationMode ? FontWeight.bold : FontWeight.normal,
+                        ),
                       ),
                     ],
                   ),
@@ -70,7 +127,64 @@ class CitizenHomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+
+          // MOCK IoT / Simulation Notice Banner
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.infoColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.infoColor.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppTheme.infoColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Data Source: MOCK IoT / Simulation Mode (Ready for ESP32)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.infoColor,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    locationService.toggleTestLocationMode();
+                    _loadNearby();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: locationService.isTestLocationMode
+                          ? AppTheme.warningColor.withOpacity(0.2)
+                          : AppTheme.surfaceDark,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      locationService.isTestLocationMode ? 'TEST GPS: ON' : 'GPS MODE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: locationService.isTestLocationMode ? AppTheme.warningColor : AppTheme.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // Primary Safety Indicator Card (Bound to Live Telemetry)
           InkWell(
@@ -177,6 +291,7 @@ class CitizenHomeScreen extends StatelessWidget {
               backgroundColor: AppTheme.dangerColor,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 18),
+              minimumSize: const Size.fromHeight(54),
             ),
             icon: const Icon(Icons.camera_alt_rounded, size: 24),
             label: Text(
@@ -184,21 +299,20 @@ class CitizenHomeScreen extends StatelessWidget {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5),
             ),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Opening Camera for Hazard Report (Phase 2 Integration)'),
-                  backgroundColor: AppTheme.dangerColor,
-                ),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CitizenReportScreen()),
               );
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Emergency SOS Helpline Button
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: AppTheme.emergencyColor, width: 2),
               foregroundColor: AppTheme.emergencyColor,
+              minimumSize: const Size.fromHeight(48),
             ),
             icon: const Icon(Icons.phone_in_talk_rounded),
             label: Text(
@@ -207,11 +321,97 @@ class CitizenHomeScreen extends StatelessWidget {
             ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Connecting to Emergency Helpline: 112')),
+                const SnackBar(
+                  content: Text('Connecting to Emergency Helpline: 112 (Disaster Response Dispatch)'),
+                  backgroundColor: AppTheme.emergencyColor,
+                ),
               );
             },
           ),
           const SizedBox(height: 24),
+
+          // Nearby Registered Poles Section
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Nearby Utility Poles',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Refresh', style: TextStyle(fontSize: 12)),
+                onPressed: _loadNearby,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          if (_isLoadingNearby)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_nearbyPoles.isEmpty)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: const [
+                    Icon(Icons.info_outline, color: AppTheme.infoColor),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'No registered poles within 15km of current coordinates.',
+                        style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ..._nearbyPoles.map((p) {
+              final distStr = p.distanceMeters != null
+                  ? (p.distanceMeters! < 1000
+                      ? '${p.distanceMeters!.round()}m'
+                      : '${(p.distanceMeters! / 1000).toStringAsFixed(1)}km')
+                  : 'Nearby';
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => PoleDetailScreen(poleId: p.id)),
+                    );
+                  },
+                  leading: CircleAvatar(
+                    backgroundColor: p.riskTier.color.withOpacity(0.15),
+                    child: Icon(p.riskTier.icon, color: p.riskTier.color, size: 20),
+                  ),
+                  title: Text(
+                    '${p.id} • ${p.locationName}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  subtitle: Text(
+                    '${p.address ?? p.zone} • $distStr away',
+                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      StatusBadge(tier: p.riskTier, isCompact: true),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.chevron_right, size: 18, color: AppTheme.textSecondary),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          const SizedBox(height: 20),
 
           // Safety Guidelines Card
           const Text(
