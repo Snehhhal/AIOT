@@ -79,12 +79,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: AppTheme.infoColor.withOpacity(0.12),
+                    color: AppTheme.infoColor.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                     border: Border.all(color: AppTheme.infoColor, width: 2.5),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.infoColor.withOpacity(0.25),
+                        color: AppTheme.infoColor.withValues(alpha: 0.25),
                         blurRadius: 30,
                         spreadRadius: 4,
                       ),

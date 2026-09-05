@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../models/pole_model.dart';
 import '../../../services/pole_provider.dart';
 import '../../common/widgets/status_badge.dart';
 import '../../monitoring/screens/pole_detail_screen.dart';
@@ -69,7 +68,7 @@ class _EngineerPolesScreenState extends State<EngineerPolesScreen> {
                         color: AppTheme.surfaceDark,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
-                          side: BorderSide(color: p.riskTier.color.withOpacity(0.5)),
+                          side: BorderSide(color: p.riskTier.color.withValues(alpha: 0.5)),
                         ),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(14),

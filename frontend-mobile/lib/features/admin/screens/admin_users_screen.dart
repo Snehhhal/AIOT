@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/api_client.dart';
 
@@ -67,7 +66,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: (isActive ? AppTheme.safeColor : AppTheme.dangerColor).withOpacity(0.15),
+                                  color: (isActive ? AppTheme.safeColor : AppTheme.dangerColor).withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(isActive ? 'ACTIVE' : 'DISABLED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isActive ? AppTheme.safeColor : AppTheme.dangerColor)),

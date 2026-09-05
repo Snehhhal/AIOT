@@ -56,7 +56,7 @@ class _TechnicianHomeScreenState extends State<TechnicianHomeScreen> {
                   color: (poleProvider.emergencyCount > 0
                           ? AppTheme.emergencyColor
                           : AppTheme.safeColor)
-                      .withOpacity(0.2),
+                      .withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: poleProvider.emergencyCount > 0
@@ -116,7 +116,7 @@ class _TechnicianHomeScreenState extends State<TechnicianHomeScreen> {
                     selected: isSelected,
                     selectedColor: color,
                     backgroundColor: AppTheme.cardDark,
-                    side: BorderSide(color: color.withOpacity(isSelected ? 1.0 : 0.4)),
+                    side: BorderSide(color: color.withValues(alpha: isSelected ? 1.0 : 0.4)),
                     onSelected: (selected) {
                       if (selected) {
                         poleProvider.selectPole(p.id);
@@ -133,9 +133,9 @@ class _TechnicianHomeScreenState extends State<TechnicianHomeScreen> {
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.warningColor.withOpacity(0.15),
+                color: AppTheme.warningColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.warningColor.withOpacity(0.5)),
+                border: Border.all(color: AppTheme.warningColor.withValues(alpha: 0.5)),
               ),
               child: const Row(
                 children: [
@@ -273,7 +273,7 @@ class _TechnicianHomeScreenState extends State<TechnicianHomeScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppTheme.infoColor.withOpacity(0.2),
+                            color: AppTheme.infoColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

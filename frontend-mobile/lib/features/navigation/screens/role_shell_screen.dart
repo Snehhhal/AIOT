@@ -68,8 +68,8 @@ class _RoleShellScreenState extends State<RoleShellScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: Chip(
-              backgroundColor: role.roleColor.withOpacity(0.15),
-              side: BorderSide(color: role.roleColor.withOpacity(0.3)),
+              backgroundColor: role.roleColor.withValues(alpha: 0.15),
+              side: BorderSide(color: role.roleColor.withValues(alpha: 0.3)),
               avatar: Icon(role.icon, size: 14, color: role.roleColor),
               label: Text(
                 auth.currentUser?.fullName.split(' ').first ?? role.displayName,

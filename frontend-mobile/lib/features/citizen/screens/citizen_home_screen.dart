@@ -133,9 +133,9 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: AppTheme.infoColor.withOpacity(0.12),
+              color: AppTheme.infoColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppTheme.infoColor.withOpacity(0.3)),
+              border: Border.all(color: AppTheme.infoColor.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -167,7 +167,7 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: locationService.isTestLocationMode
-                          ? AppTheme.warningColor.withOpacity(0.2)
+                          ? AppTheme.warningColor.withValues(alpha: 0.2)
                           : AppTheme.surfaceDark,
                       borderRadius: BorderRadius.circular(6),
                     ),
@@ -227,7 +227,7 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
                     const SizedBox(height: 16),
                     CircleAvatar(
                       radius: 36,
-                      backgroundColor: statusColor.withOpacity(0.15),
+                      backgroundColor: statusColor.withValues(alpha: 0.15),
                       child: Icon(
                         riskTier.icon,
                         color: statusColor,
@@ -257,7 +257,7 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
                         margin: const EdgeInsets.only(top: 12),
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppTheme.infoColor.withOpacity(0.15),
+                          color: AppTheme.infoColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Row(
@@ -389,7 +389,7 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
                     );
                   },
                   leading: CircleAvatar(
-                    backgroundColor: p.riskTier.color.withOpacity(0.15),
+                    backgroundColor: p.riskTier.color.withValues(alpha: 0.15),
                     child: Icon(p.riskTier.icon, color: p.riskTier.color, size: 20),
                   ),
                   title: Text(
@@ -439,8 +439,9 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   static Widget _buildTipRow(IconData icon, String text) {
     return Padding(

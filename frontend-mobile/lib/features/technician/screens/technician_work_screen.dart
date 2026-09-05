@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../models/hazard_report_model.dart';
-import '../../../services/api_client.dart';
 import '../../../services/photo_upload_service.dart';
 import '../../../services/pole_provider.dart';
 
@@ -53,7 +50,6 @@ class _TechnicianWorkScreenState extends State<TechnicianWorkScreen> {
     }
 
     setState(() => _isSubmitting = true);
-    final notes = 'Insulation: MΩ | Earth: Ω | Notes: ';
 
     // Update pole telemetry back to normal safe steady state
     final poleProvider = Provider.of<PoleProvider>(context, listen: false);
@@ -63,7 +59,7 @@ class _TechnicianWorkScreenState extends State<TechnicianWorkScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Work order for  submitted and marked RESOLVED. Pole restored to SAFE.'),
+          content: Text('Work order for $_selectedPoleId submitted and marked RESOLVED. Pole restored to SAFE.'),
           backgroundColor: AppTheme.safeColor,
         ),
       );
@@ -155,9 +151,9 @@ class _TechnicianWorkScreenState extends State<TechnicianWorkScreen> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.safeColor.withOpacity(0.1),
+                  color: AppTheme.safeColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.safeColor.withOpacity(0.5)),
+                  border: Border.all(color: AppTheme.safeColor.withValues(alpha: 0.5)),
                 ),
                 child: Row(
                   children: [

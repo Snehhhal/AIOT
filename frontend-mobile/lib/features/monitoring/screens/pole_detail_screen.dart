@@ -54,9 +54,9 @@ class _PoleDetailScreenState extends State<PoleDetailScreen> {
     final displayPoints = (cached != null && cached.isNotEmpty) ? cached : _historyPoints;
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: AppTheme.bgDark,
       appBar: AppBar(
-        title: Text('Pole  Telemetry'),
+        title: Text('Pole ${widget.poleId} Telemetry'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -319,7 +319,7 @@ class _PoleDetailScreenState extends State<PoleDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -393,7 +393,7 @@ class _PoleDetailScreenState extends State<PoleDetailScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: tagColor.withOpacity(0.15),
+                          color: tagColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(tag, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: tagColor)),

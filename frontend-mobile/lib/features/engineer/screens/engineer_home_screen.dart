@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../models/pole_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/pole_provider.dart';
 import '../../common/widgets/status_badge.dart';
@@ -243,7 +242,7 @@ class EngineerHomeScreen extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.15),
+          backgroundColor: color.withValues(alpha: 0.15),
           child: Text(
             poleId.length > 2 ? poleId.substring(2) : poleId,
             style: TextStyle(color: color, fontWeight: FontWeight.bold),

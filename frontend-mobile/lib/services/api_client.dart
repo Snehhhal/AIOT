@@ -685,6 +685,7 @@ class ApiClient {
         leakageCurrent: 1.5 + (index * 0.4),
         voltage: 230.0 - (index * 0.2),
         temperature: 27.0 + (index % 3),
+        humidity: 50.0 + (index % 5),
       );
     });
   }

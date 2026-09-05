@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/pole_provider.dart';
@@ -65,9 +64,9 @@ class AdminHomeScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.infoColor.withOpacity(0.1),
+              color: AppTheme.infoColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.infoColor.withOpacity(0.5), width: 1.5),
+              border: Border.all(color: AppTheme.infoColor.withValues(alpha: 0.5), width: 1.5),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,9 +225,9 @@ class AdminHomeScreen extends StatelessWidget {
   Widget _buildScenarioButton(BuildContext context, String label, Color color, VoidCallback onTap) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.2),
+        backgroundColor: color.withValues(alpha: 0.2),
         foregroundColor: color,
-        side: BorderSide(color: color.withOpacity(0.8)),
+        side: BorderSide(color: color.withValues(alpha: 0.8)),
         elevation: 0,
         minimumSize: const Size(140, 38),
         padding: const EdgeInsets.symmetric(horizontal: 10),

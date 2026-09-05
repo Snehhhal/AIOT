@@ -156,7 +156,7 @@ class _ReportCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surfaceDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: statusColor.withOpacity(0.35), width: 1.2),
+        border: Border.all(color: statusColor.withValues(alpha: 0.35), width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,9 +171,9 @@ class _ReportCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
+                  color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: statusColor.withOpacity(0.4), width: 1),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.4), width: 1),
                 ),
                 child: Text(
                   report.statusDisplay.toUpperCase(),
@@ -217,7 +217,7 @@ class _ReportCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.04),
+                color: Colors.white.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -242,7 +242,7 @@ class _ReportCard extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 2),
             height: 4,
             decoration: BoxDecoration(
-              color: isDone ? activeColor : Colors.white.withOpacity(0.1),
+              color: isDone ? activeColor : Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(2),
             ),
           ),

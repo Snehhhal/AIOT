@@ -77,7 +77,7 @@ class _CitizenChatScreenState extends State<CitizenChatScreen> {
                   final prompt = _quickPrompts[idx];
                   return ActionChip(
                     backgroundColor: AppTheme.surfaceDark,
-                    side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                     label: Text(prompt, style: const TextStyle(fontSize: 11, color: AppTheme.textPrimary)),
                     onPressed: () => _sendMessage(prompt),
                   );
@@ -122,7 +122,7 @@ class _CitizenChatScreenState extends State<CitizenChatScreen> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceDark,
-                border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08))),
+                border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
               ),
               child: Row(
                 children: [
@@ -173,7 +173,7 @@ class _MessageBubble extends StatelessWidget {
           color: message.isUser ? AppTheme.infoColor : AppTheme.surfaceDark,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: message.isUser ? AppTheme.infoColor : Colors.white.withOpacity(0.08),
+            color: message.isUser ? AppTheme.infoColor : Colors.white.withValues(alpha: 0.08),
           ),
         ),
         child: Text(

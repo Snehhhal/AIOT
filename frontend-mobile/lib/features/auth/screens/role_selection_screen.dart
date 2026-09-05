@@ -112,10 +112,10 @@ class RoleSelectionScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppTheme.surfaceDark,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: data.color.withOpacity(0.35), width: 1.5),
+                        border: Border.all(color: data.color.withValues(alpha: 0.35), width: 1.5),
                         boxShadow: [
                           BoxShadow(
-                            color: data.color.withOpacity(0.08),
+                            color: data.color.withValues(alpha: 0.08),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -128,7 +128,7 @@ class RoleSelectionScreen extends StatelessWidget {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: data.color.withOpacity(0.15),
+                              color: data.color.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(data.icon, color: data.color, size: 24),
@@ -152,9 +152,9 @@ class RoleSelectionScreen extends StatelessWidget {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: data.badgeColor.withOpacity(0.15),
+                                        color: data.badgeColor.withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(color: data.badgeColor.withOpacity(0.4), width: 1),
+                                        border: Border.all(color: data.badgeColor.withValues(alpha: 0.4), width: 1),
                                       ),
                                       child: Text(
                                         data.badge,
@@ -181,7 +181,7 @@ class RoleSelectionScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Icon(Icons.chevron_right_rounded, color: data.color.withOpacity(0.7), size: 22),
+                          Icon(Icons.chevron_right_rounded, color: data.color.withValues(alpha: 0.7), size: 22),
                         ],
                       ),
                     ),

@@ -72,6 +72,7 @@ frontend-mobile/android/captures/
 frontend-mobile/android/gradlew
 frontend-mobile/android/gradlew.bat
 frontend-mobile/android/local.properties
+frontend-mobile/android/app/src/main/java/**/GeneratedPluginRegistrant.java
 frontend-mobile/ios/Pods/
 frontend-mobile/ios/.symlinks/
 frontend-mobile/ios/Flutter/Flutter.framework

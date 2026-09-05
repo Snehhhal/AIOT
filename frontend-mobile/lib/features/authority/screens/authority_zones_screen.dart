@@ -45,7 +45,7 @@ class AuthorityZonesScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: (hasEmergency ? AppTheme.emergencyColor : AppTheme.safeColor).withOpacity(0.15),
+                          color: (hasEmergency ? AppTheme.emergencyColor : AppTheme.safeColor).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -66,7 +66,7 @@ class AuthorityZonesScreen extends StatelessWidget {
                     dense: true,
                     leading: CircleAvatar(
                       radius: 12,
-                      backgroundColor: p.riskTier.color.withOpacity(0.2),
+                      backgroundColor: p.riskTier.color.withValues(alpha: 0.2),
                       child: Icon(p.riskTier.icon, size: 14, color: p.riskTier.color),
                     ),
                     title: Text('${p.id} — ${p.locationName}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),

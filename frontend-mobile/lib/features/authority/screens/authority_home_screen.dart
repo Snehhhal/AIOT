@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../models/pole_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/pole_provider.dart';
 import '../../common/widgets/status_badge.dart';
@@ -104,7 +103,7 @@ class AuthorityHomeScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: (hasEmergency ? AppTheme.emergencyColor : AppTheme.safeColor).withOpacity(0.2),
+                  color: (hasEmergency ? AppTheme.emergencyColor : AppTheme.safeColor).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -259,7 +258,7 @@ class AuthorityHomeScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(

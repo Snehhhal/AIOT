@@ -83,9 +83,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: role.roleColor.withOpacity(0.15),
+                      color: role.roleColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: role.roleColor.withOpacity(0.4), width: 1),
+                      border: Border.all(color: role.roleColor.withValues(alpha: 0.4), width: 1),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -123,9 +123,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: role.roleColor.withOpacity(0.12),
+                    color: role.roleColor.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
-                    border: Border.all(color: role.roleColor.withOpacity(0.5), width: 2),
+                    border: Border.all(color: role.roleColor.withValues(alpha: 0.5), width: 2),
                   ),
                   child: Icon(
                     Icons.bolt_rounded,
@@ -162,9 +162,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.dangerColor.withOpacity(0.15),
+                    color: AppTheme.dangerColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.dangerColor.withOpacity(0.4)),
+                    border: Border.all(color: AppTheme.dangerColor.withValues(alpha: 0.4)),
                   ),
                   child: Text(
                     auth.errorMessage!,

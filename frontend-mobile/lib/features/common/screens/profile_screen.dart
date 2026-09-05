@@ -15,7 +15,6 @@ class ProfileScreen extends StatelessWidget {
     final locationService = Provider.of<LocationService>(context);
     final user = auth.currentUser;
     final role = auth.currentRole;
-    final loc = AppLocalizations(auth.currentLanguage);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -27,7 +26,7 @@ class ProfileScreen extends StatelessWidget {
             color: AppTheme.surfaceDark,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: role.roleColor.withOpacity(0.5)),
+              side: BorderSide(color: role.roleColor.withValues(alpha: 0.5)),
             ),
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -35,7 +34,7 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 32,
-                    backgroundColor: role.roleColor.withOpacity(0.2),
+                    backgroundColor: role.roleColor.withValues(alpha: 0.2),
                     child: Icon(role.icon, size: 36, color: role.roleColor),
                   ),
                   const SizedBox(width: 16),
@@ -56,7 +55,7 @@ class ProfileScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: role.roleColor.withOpacity(0.15),
+                            color: role.roleColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

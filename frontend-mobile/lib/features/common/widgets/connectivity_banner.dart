@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/auth_service.dart';
@@ -15,7 +15,7 @@ class ConnectivityBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       color: isOffline
-          ? AppTheme.emergencyColor.withOpacity(0.9)
+          ? AppTheme.emergencyColor.withValues(alpha: 0.9)
           : AppTheme.surfaceDark,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

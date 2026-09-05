@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -27,7 +26,6 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
   String _selectedHazardType = 'Electrical leakage suspicion';
   XFile? _selectedImage;
   bool _isUploading = false;
-  String? _uploadedImageUrl;
 
   final List<String> _hazardTypes = const [
     'Electrical leakage suspicion',
@@ -63,7 +61,6 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
     if (file != null) {
       setState(() {
         _selectedImage = file;
-        _uploadedImageUrl = null;
       });
     }
   }
@@ -73,7 +70,6 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
     if (file != null) {
       setState(() {
         _selectedImage = file;
-        _uploadedImageUrl = null;
       });
     }
   }
@@ -159,9 +155,9 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.infoColor.withOpacity(0.12),
+                color: AppTheme.infoColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppTheme.infoColor.withOpacity(0.3)),
+                border: Border.all(color: AppTheme.infoColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -225,7 +221,7 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceDark,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                   ),
                   child: Row(
                     children: [
@@ -279,7 +275,7 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
 
                 // Associated Pole Selection (optional)
                 DropdownButtonFormField<String>(
-                  value: _selectedPoleId,
+                  initialValue: _selectedPoleId,
                   decoration: const InputDecoration(
                     labelText: 'Associated Pole (Optional)',
                     prefixIcon: Icon(Icons.bolt_outlined, color: AppTheme.textSecondary),
@@ -298,7 +294,7 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
 
                 // Hazard Type Dropdown
                 DropdownButtonFormField<String>(
-                  value: _selectedHazardType,
+                  initialValue: _selectedHazardType,
                   decoration: const InputDecoration(
                     labelText: 'Observed Hazard Type',
                     prefixIcon: Icon(Icons.warning_amber_rounded, color: AppTheme.dangerColor),
@@ -347,7 +343,7 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            side: BorderSide(color: AppTheme.infoColor.withOpacity(0.4)),
+                            side: BorderSide(color: AppTheme.infoColor.withValues(alpha: 0.4)),
                           ),
                           icon: const Icon(Icons.camera_alt_rounded, color: AppTheme.infoColor, size: 20),
                           label: const Text('Take Photo', style: TextStyle(color: AppTheme.infoColor, fontWeight: FontWeight.bold)),
@@ -360,7 +356,7 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                            side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
                           ),
                           icon: const Icon(Icons.photo_library_rounded, color: Colors.white, size: 20),
                           label: const Text('Choose Gallery', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -375,7 +371,7 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
                     decoration: BoxDecoration(
                       color: AppTheme.surfaceDark,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.successColor.withOpacity(0.4)),
+                      border: Border.all(color: AppTheme.successColor.withValues(alpha: 0.4)),
                     ),
                     child: Row(
                       children: [

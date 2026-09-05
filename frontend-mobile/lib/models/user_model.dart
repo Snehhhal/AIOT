@@ -17,6 +17,8 @@ class UserModel {
     required this.token,
   });
 
+  String get fullName => name;
+
   bool get isCitizen => role == UserRole.citizen;
   bool get isTechnician => role == UserRole.technician;
   bool get isEngineer => role == UserRole.engineer;

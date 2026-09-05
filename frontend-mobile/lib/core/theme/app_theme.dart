@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class AppTheme {
   // Safety Palette
@@ -10,6 +10,8 @@ class AppTheme {
 
   // Neutral Palette (Dark High-Contrast Utility Theme)
   static const Color bgDark = Color(0xFF0B0F19);
+  static const Color backgroundDark = bgDark;
+  static const Color successColor = safeColor;
   static const Color surfaceDark = Color(0xFF151D2E);
   static const Color cardDark = Color(0xFF1E293B);
   static const Color borderDark = Color(0xFF334155);
@@ -28,7 +30,7 @@ class AppTheme {
         error: emergencyColor,
         surface: surfaceDark,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: cardDark,
         elevation: 0,
         shape: RoundedRectangleBorder(

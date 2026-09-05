@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/incident_model.dart';
 import '../../../services/api_client.dart';
@@ -94,7 +93,7 @@ class _EngineerIncidentsScreenState extends State<EngineerIncidentsScreen> {
                         color: AppTheme.surfaceDark,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
-                          side: BorderSide(color: color.withOpacity(0.5)),
+                          side: BorderSide(color: color.withValues(alpha: 0.5)),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -107,7 +106,7 @@ class _EngineerIncidentsScreenState extends State<EngineerIncidentsScreen> {
                                   Text(inc.id, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.textPrimary)),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
+                                    decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
                                     child: Text(inc.severity, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
                                   ),
                                 ],

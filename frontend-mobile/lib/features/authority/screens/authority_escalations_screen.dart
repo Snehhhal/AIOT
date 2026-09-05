@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/incident_model.dart';
 import '../../../services/api_client.dart';
@@ -121,7 +120,7 @@ class _AuthorityEscalationsScreenState extends State<AuthorityEscalationsScreen>
                                 Text('ESCALATION #${e.id}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.emergencyColor)),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(color: AppTheme.emergencyColor.withOpacity(0.2), borderRadius: BorderRadius.circular(6)),
+                                  decoration: BoxDecoration(color: AppTheme.emergencyColor.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(6)),
                                   child: const Text('OVERDUE ACTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.emergencyColor)),
                                 ),
                               ],

@@ -12,7 +12,7 @@ class SensorHistoryPoint {
     required this.leakageCurrent,
     required this.voltage,
     required this.temperature,
-    required this.humidity,
+    this.humidity = 50.0,
     this.tiltAngle = 1.0,
     this.rain = false,
   });

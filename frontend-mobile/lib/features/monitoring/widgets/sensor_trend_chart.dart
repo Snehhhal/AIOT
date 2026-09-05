@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import '../../../core/constants/app_constants.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import '../../../core/theme/app_theme.dart';
 import '../../../models/sensor_history_model.dart';
 
@@ -114,12 +113,12 @@ class _SensorTrendChartState extends State<SensorTrendChart> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: metricConfig.accentColor.withOpacity(0.15),
+                  color: metricConfig.accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: metricConfig.accentColor.withOpacity(0.5)),
+                  border: Border.all(color: metricConfig.accentColor.withValues(alpha: 0.5)),
                 ),
                 child: Text(
-                  ' ',
+                  '${currentVal.toStringAsFixed(1)} ${metricConfig.unit}',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
@@ -179,7 +178,7 @@ class _SensorTrendChartState extends State<SensorTrendChart> {
               decoration: BoxDecoration(
                 color: AppTheme.cardDark,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: metricConfig.accentColor.withOpacity(0.6)),
+                border: Border.all(color: metricConfig.accentColor.withValues(alpha: 0.6)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -195,8 +194,7 @@ class _SensorTrendChartState extends State<SensorTrendChart> {
                     ],
                   ),
                   Text(
-                    ' '
-                    '',
+                    '${widget.points[_selectedIndex!].getValueForMetric(_activeMetric).toStringAsFixed(1)} ${metricConfig.unit}',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -217,9 +215,9 @@ class _SensorTrendChartState extends State<SensorTrendChart> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatItem('Min', ''),
-                _buildStatItem('Avg', ''),
-                _buildStatItem('Max', ''),
+                _buildStatItem('Min', '${minVal.toStringAsFixed(1)} ${metricConfig.unit}'),
+                _buildStatItem('Avg', '${avgVal.toStringAsFixed(1)} ${metricConfig.unit}'),
+                _buildStatItem('Max', '${maxVal.toStringAsFixed(1)} ${metricConfig.unit}'),
                 if (metricConfig.dangerThreshold != null)
                   _buildStatItem(
                     'Breaches',
@@ -373,7 +371,7 @@ class _TrendChartPainter extends CustomPainter {
 
     // 1. Draw Grid Lines (Horizontal)
     final gridPaint = Paint()
-      ..color = AppTheme.borderDark.withOpacity(0.4)
+      ..color = AppTheme.borderDark.withValues(alpha: 0.4)
       ..strokeWidth = 1.0;
 
     for (int i = 1; i <= 3; i++) {
@@ -385,7 +383,7 @@ class _TrendChartPainter extends CustomPainter {
     if (dangerThreshold != null && dangerThreshold! >= minVal && dangerThreshold! <= maxVal) {
       final thresholdY = size.height - ((dangerThreshold! - minVal) / range * size.height);
       final thresholdPaint = Paint()
-        ..color = AppTheme.emergencyColor.withOpacity(0.8)
+        ..color = AppTheme.emergencyColor.withValues(alpha: 0.8)
         ..strokeWidth = 1.2
         ..style = PaintingStyle.stroke;
 
@@ -452,8 +450,8 @@ class _TrendChartPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          accentColor.withOpacity(0.35),
-          accentColor.withOpacity(0.0),
+          accentColor.withValues(alpha: 0.35),
+          accentColor.withValues(alpha: 0.0),
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.fill;
@@ -479,7 +477,7 @@ class _TrendChartPainter extends CustomPainter {
       final isBreach = dangerThreshold != null && val >= dangerThreshold!;
 
       if (isBreach) {
-        haloPaint.color = AppTheme.emergencyColor.withOpacity(0.3);
+        haloPaint.color = AppTheme.emergencyColor.withValues(alpha: 0.3);
         canvas.drawCircle(Offset(x, y), 6, haloPaint);
         dotPaint.color = AppTheme.emergencyColor;
         canvas.drawCircle(Offset(x, y), 3, dotPaint);
@@ -495,7 +493,7 @@ class _TrendChartPainter extends CustomPainter {
       final scrubY = size.height - ((values[selectedIndex!] - minVal) / range * size.height);
 
       final scrubPaint = Paint()
-        ..color = Colors.white.withOpacity(0.7)
+        ..color = Colors.white.withValues(alpha: 0.7)
         ..strokeWidth = 1.0;
 
       canvas.drawLine(Offset(scrubX, 0), Offset(scrubX, size.height), scrubPaint);

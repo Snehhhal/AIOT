@@ -24,9 +24,9 @@ class WelcomeScreen extends StatelessWidget {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: AppTheme.infoColor.withOpacity(0.15),
+                    color: AppTheme.infoColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.infoColor.withOpacity(0.4), width: 1.5),
+                    border: Border.all(color: AppTheme.infoColor.withValues(alpha: 0.4), width: 1.5),
                   ),
                   child: const Icon(Icons.bolt_rounded, color: AppTheme.infoColor, size: 30),
                 ),
@@ -145,7 +145,7 @@ class _FeatureTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surfaceDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.06), width: 1),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,7 +154,7 @@ class _FeatureTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.12),
+              color: iconColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: iconColor, size: 22),

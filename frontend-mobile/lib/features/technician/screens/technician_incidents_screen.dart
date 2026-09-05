@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/incident_model.dart';
 import '../../../services/api_client.dart';
-import '../../../services/auth_service.dart';
-import '../../common/widgets/status_badge.dart';
 import '../../monitoring/screens/pole_detail_screen.dart';
 
 class TechnicianIncidentsScreen extends StatefulWidget {
@@ -133,7 +129,7 @@ class _TechnicianIncidentsScreenState extends State<TechnicianIncidentsScreen> {
       color: AppTheme.surfaceDark,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: severityColor.withOpacity(0.6), width: isEmergency ? 1.5 : 1.0),
+        side: BorderSide(color: severityColor.withValues(alpha: 0.6), width: isEmergency ? 1.5 : 1.0),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -148,7 +144,7 @@ class _TechnicianIncidentsScreenState extends State<TechnicianIncidentsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: severityColor.withOpacity(0.15),
+                        color: severityColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
