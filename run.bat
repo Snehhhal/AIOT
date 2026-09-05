@@ -29,7 +29,7 @@ if exist ".venv\Scripts\activate.bat" (
 )
 
 echo [*] Starting FastAPI Backend on http://localhost:8000 ...
-start "PoleGuard Backend Server" /min "%UVICORN_EXE%" backend.main:app --host 0.0.0.0 --port 8000
+start "PoleGuard Backend Server" /min "%UVICORN_EXE%" backend.main:app --host 0.0.0.0 --port 8000 --reload
 
 echo [*] Opening PoleGuard Mobile Application in your browser...
 timeout /t 2 /nobreak >nul

@@ -32,6 +32,7 @@ VALID_STATUS_FLOW = {
 
 
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED, summary="Submit Citizen Hazard Report")
+@router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 async def create_hazard_report(
     report_in: HazardReportCreate,
     db: AsyncSession = Depends(get_db),

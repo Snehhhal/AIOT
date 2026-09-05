@@ -20,6 +20,7 @@ MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 
 
 @router.post("/image", response_model=dict, status_code=status.HTTP_201_CREATED, summary="Upload Camera or Gallery Photo")
+@router.post("/image/", response_model=dict, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 async def upload_image(file: UploadFile = File(...)):
     """
     Accepts multipart/form-data image from mobile camera or gallery.
