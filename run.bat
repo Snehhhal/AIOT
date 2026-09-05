@@ -9,19 +9,27 @@ echo.
 
 cd /d "%~dp0"
 
-REM Check for virtual environment
-if not exist ".venv" (
+REM Check for virtual environment (local or sibling AIOT)
+if exist ".venv\Scripts\activate.bat" (
+    call .venv\Scripts\activate.bat
+    set "PYTHON_EXE=.venv\Scripts\python.exe"
+    set "UVICORN_EXE=.venv\Scripts\uvicorn.exe"
+) else if exist "..\AIOT\.venv\Scripts\activate.bat" (
+    call ..\AIOT\.venv\Scripts\activate.bat
+    set "PYTHON_EXE=..\AIOT\.venv\Scripts\python.exe"
+    set "UVICORN_EXE=..\AIOT\.venv\Scripts\uvicorn.exe"
+) else (
     echo [*] Setting up Python virtual environment...
     python -m venv .venv
     call .venv\Scripts\activate.bat
+    set "PYTHON_EXE=.venv\Scripts\python.exe"
+    set "UVICORN_EXE=.venv\Scripts\uvicorn.exe"
     echo [*] Installing dependencies from requirements.txt...
     pip install -r requirements.txt
-) else (
-    call .venv\Scripts\activate.bat
 )
 
 echo [*] Starting FastAPI Backend on http://localhost:8000 ...
-start "PoleGuard Backend Server" /min .venv\Scripts\uvicorn backend.main:app --host 0.0.0.0 --port 8000
+start "PoleGuard Backend Server" /min "%UVICORN_EXE%" backend.main:app --host 0.0.0.0 --port 8000
 
 echo [*] Opening PoleGuard Mobile Application in your browser...
 timeout /t 2 /nobreak >nul
@@ -32,7 +40,7 @@ echo ======================================================================
 echo  [+] Mobile App:      Opened in your browser!
 echo  [+] Backend API:     http://localhost:8000/docs
 echo  [+] Health Check:    http://localhost:8000/health
-echo  [+] Automated Tests: Run 'pytest tests/' to verify all 54 test cases
+echo  [+] Automated Tests: Run 'pytest tests/' to verify all 60 test cases
 echo ======================================================================
 echo.
 pause
