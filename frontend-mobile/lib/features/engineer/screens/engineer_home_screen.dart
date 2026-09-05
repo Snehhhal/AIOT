@@ -104,7 +104,7 @@ class EngineerHomeScreen extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Assigned: Lineman Kailas (#14)', style: TextStyle(fontSize: 12, color: AppTheme.textPrimary)),
+                              const Text('Assigned: Duty Field Unit #14', style: TextStyle(fontSize: 12, color: AppTheme.textPrimary)),
                               Text(
                                 pole.riskTier == RiskTier.emergency ? 'STATUS: URGENT ESCALATION' : 'STATUS: DISPATCHED',
                                 style: TextStyle(

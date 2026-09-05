@@ -152,31 +152,4 @@ class AppConstants {
   // Backend Defaults
   static const String defaultApiBaseUrl = 'http://10.0.2.2:8000/api/v1'; // Android Emulator
   static const String localHostApiBaseUrl = 'http://localhost:8000/api/v1';
-
-  // Demo Accounts
-  static const Map<String, String> demoCitizen = {
-    'email': 'citizen@safety.org',
-    'role': 'CITIZEN',
-    'name': 'Rahul Sharma',
-  };
-  static const Map<String, String> demoTechnician = {
-    'email': 'technician@safety.org',
-    'role': 'TECHNICIAN',
-    'name': 'Kailas Jadhav (Lineman #14)',
-  };
-  static const Map<String, String> demoEngineer = {
-    'email': 'engineer@safety.org',
-    'role': 'ENGINEER',
-    'name': 'Er. Snehal Chavan (Sub-Div)',
-  };
-  static const Map<String, String> demoAuthority = {
-    'email': 'authority@safety.org',
-    'role': 'AUTHORITY',
-    'name': 'Commissioner Office (Zone 3)',
-  };
-  static const Map<String, String> demoAdmin = {
-    'email': 'admin@safety.org',
-    'role': 'ADMIN',
-    'name': 'Platform Root Administrator',
-  };
 }

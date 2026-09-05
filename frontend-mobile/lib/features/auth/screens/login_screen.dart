@@ -21,37 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
 
   @override
-  void initState() {
-    super.initState();
-    // Default prefill based on selected role
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _prefillForRole();
-    });
-  }
-
-  void _prefillForRole() {
-    final auth = Provider.of<AuthService>(context, listen: false);
-    switch (auth.selectedRole) {
-      case UserRole.citizen:
-        _emailController.text = AppConstants.demoCitizen['email']!;
-        break;
-      case UserRole.technician:
-        _emailController.text = AppConstants.demoTechnician['email']!;
-        break;
-      case UserRole.engineer:
-        _emailController.text = AppConstants.demoEngineer['email']!;
-        break;
-      case UserRole.authority:
-        _emailController.text = AppConstants.demoAuthority['email']!;
-        break;
-      case UserRole.admin:
-        _emailController.text = AppConstants.demoAdmin['email']!;
-        break;
-    }
-    _passwordController.text = 'password123';
-  }
-
-  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -258,22 +227,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: auth.isLoading
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : const Text('Log In', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-              ),
-              const SizedBox(height: 14),
-
-              // Demo Account Auto-Fill Helper
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(color: Colors.white.withOpacity(0.12)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                icon: const Icon(Icons.flash_on_rounded, size: 16, color: AppTheme.warningColor),
-                label: Text(
-                  'Fill Pre-seeded Demo Credentials',
-                  style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.85)),
-                ),
-                onPressed: _prefillForRole,
               ),
               const SizedBox(height: 24),
 

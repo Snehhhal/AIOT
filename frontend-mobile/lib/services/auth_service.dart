@@ -158,30 +158,6 @@ class AuthService extends ChangeNotifier {
     );
   }
 
-  /// Quick login for demonstrations with pre-seeded database accounts
-  Future<bool> quickDemoLogin(UserRole role) async {
-    String email = 'citizen@safety.org';
-    switch (role) {
-      case UserRole.citizen:
-        email = AppConstants.demoCitizen['email']!;
-        break;
-      case UserRole.technician:
-        email = AppConstants.demoTechnician['email']!;
-        break;
-      case UserRole.engineer:
-        email = AppConstants.demoEngineer['email']!;
-        break;
-      case UserRole.authority:
-        email = AppConstants.demoAuthority['email']!;
-        break;
-      case UserRole.admin:
-        email = AppConstants.demoAdmin['email']!;
-        break;
-    }
-
-    return await login(email, 'password123');
-  }
-
   /// Logs out user and clears persisted session
   Future<void> logout() async {
     _currentUser = null;

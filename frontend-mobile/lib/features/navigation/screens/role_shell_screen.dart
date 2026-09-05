@@ -65,14 +65,17 @@ class _RoleShellScreenState extends State<RoleShellScreen> {
           ],
         ),
         actions: [
-          TextButton.icon(
-            style: TextButton.styleFrom(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: Chip(
               backgroundColor: role.roleColor.withOpacity(0.15),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              side: BorderSide(color: role.roleColor.withOpacity(0.3)),
+              avatar: Icon(role.icon, size: 14, color: role.roleColor),
+              label: Text(
+                auth.currentUser?.fullName.split(' ').first ?? role.displayName,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: role.roleColor),
+              ),
             ),
-            icon: Icon(Icons.swap_horiz_rounded, size: 16, color: role.roleColor),
-            label: Text('Switch Role', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: role.roleColor)),
-            onPressed: () => _showRoleSwitchModal(context, auth),
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded, size: 20),
@@ -200,51 +203,6 @@ class _RoleShellScreenState extends State<RoleShellScreen> {
         setState(() => _currentIndex = index);
       },
       items: items,
-    );
-  }
-
-  void _showRoleSwitchModal(BuildContext context, AuthService auth) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.surfaceDark,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Demo Role Switcher', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
-              const SizedBox(height: 4),
-              const Text('Select any role to test dynamic role-based UI and access control:', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-              const SizedBox(height: 16),
-              ...UserRole.values.map((r) {
-                final isCurrent = r == auth.currentRole;
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: r.roleColor.withOpacity(0.15),
-                    child: Icon(r.icon, color: r.roleColor, size: 20),
-                  ),
-                  title: Text(
-                    r.displayName,
-                    style: TextStyle(fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal, color: isCurrent ? r.roleColor : AppTheme.textPrimary),
-                  ),
-                  subtitle: Text('Role ID: ${r.id}', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                  trailing: isCurrent ? Icon(Icons.check_circle, color: r.roleColor, size: 20) : null,
-                  onTap: () {
-                    auth.quickDemoLogin(r);
-                    setState(() => _currentIndex = 0);
-                    Navigator.pop(ctx);
-                  },
-                );
-              }),
-            ],
-          ),
-        );
-      },
     );
   }
 }
