@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/app_localizations.dart';
 import '../../../services/auth_service.dart';
 import '../../navigation/screens/role_shell_screen.dart';
 import 'forgot_password_screen.dart';
@@ -66,6 +67,32 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
     final role = auth.selectedRole;
+    final loc = AppLocalizations(auth.currentLanguage);
+
+    String portalTitle;
+    String portalSubtitle;
+    switch (role) {
+      case UserRole.citizen:
+        portalTitle = '${loc.tr('role_citizen_title')} ${loc.tr('login')}';
+        portalSubtitle = loc.tr('role_citizen_tagline');
+        break;
+      case UserRole.technician:
+        portalTitle = '${loc.tr('role_technician_title')} ${loc.tr('login')}';
+        portalSubtitle = loc.tr('role_technician_tagline');
+        break;
+      case UserRole.engineer:
+        portalTitle = '${loc.tr('role_engineer_title')} ${loc.tr('login')}';
+        portalSubtitle = loc.tr('role_engineer_tagline');
+        break;
+      case UserRole.authority:
+        portalTitle = '${loc.tr('role_authority_title')} ${loc.tr('login')}';
+        portalSubtitle = loc.tr('role_authority_tagline');
+        break;
+      case UserRole.admin:
+        portalTitle = '${loc.tr('role_admin_title')} ${loc.tr('login')}';
+        portalSubtitle = loc.tr('role_admin_tagline');
+        break;
+    }
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
@@ -75,13 +102,13 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 10),
-              // Role Badge & Switcher Button
+              const SizedBox(height: 6),
+              // Top Bar: Role badge, Change Role button, and Language Selector
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: role.roleColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
@@ -103,15 +130,59 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   ),
-                  TextButton.icon(
-                    icon: const Icon(Icons.swap_horiz_rounded, size: 16),
-                    label: const Text('Change Role', style: TextStyle(fontSize: 12)),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
-                      );
-                    },
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton.icon(
+                        icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                        label: Text(loc.tr('change_role'), style: const TextStyle(fontSize: 12)),
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+                          );
+                        },
+                      ),
+                      // Language Selector
+                      PopupMenuButton<AppLanguage>(
+                        tooltip: loc.tr('select_language'),
+                        offset: const Offset(0, 40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        color: AppTheme.surfaceDark,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceDark,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white24, width: 1),
+                          ),
+                          child: Text(
+                            auth.currentLanguage.flag,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                        onSelected: (AppLanguage selected) => auth.setLanguage(selected),
+                        itemBuilder: (context) => AppLanguage.values.map((lang) {
+                          final isSelected = lang == auth.currentLanguage;
+                          return PopupMenuItem<AppLanguage>(
+                            value: lang,
+                            child: Row(
+                              children: [
+                                Text(lang.flag, style: const TextStyle(fontSize: 16)),
+                                const SizedBox(width: 10),
+                                Text(
+                                  lang.label,
+                                  style: TextStyle(
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    color: isSelected ? AppTheme.infoColor : Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -136,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Sign In to ${AppConstants.appName}',
+                portalTitle,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 22,
@@ -147,10 +218,10 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Authenticating with municipal safety platform as ${role.displayName}.',
+                portalSubtitle,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 13,
                   color: AppTheme.textSecondary,
                   height: 1.3,
                 ),
@@ -177,9 +248,9 @@ class _LoginScreenState extends State<LoginScreen> {
               // Email
               TextField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email Address',
-                  prefixIcon: Icon(Icons.email_outlined, color: AppTheme.textSecondary),
+                decoration: InputDecoration(
+                  labelText: loc.tr('email'),
+                  prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.textSecondary),
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
@@ -189,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
               TextField(
                 controller: _passwordController,
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: loc.tr('password'),
                   prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.textSecondary),
                   suffixIcon: IconButton(
                     icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: AppTheme.textSecondary),
@@ -210,7 +281,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                     );
                   },
-                  child: const Text('Forgot Password?', style: TextStyle(fontSize: 12, color: AppTheme.infoColor)),
+                  child: Text(loc.tr('forgot_password'), style: const TextStyle(fontSize: 12, color: AppTheme.infoColor)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -226,7 +297,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: auth.isLoading ? null : _handleLogin,
                 child: auth.isLoading
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Log In', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    : Text(loc.tr('login'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               ),
               const SizedBox(height: 24),
 
@@ -234,7 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Don't have an account? ", style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  Text('${loc.tr('dont_have_account')} ', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -243,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     child: Text(
-                      'Sign Up',
+                      loc.tr('signup'),
                       style: TextStyle(color: role.roleColor, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),

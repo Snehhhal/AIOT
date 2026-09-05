@@ -1,61 +1,69 @@
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
+enum LocationPermissionState {
+  unknown,
+  granted,
+  denied,
+  permanentlyDenied,
+  servicesDisabled,
+}
+
 class LocationService extends ChangeNotifier {
   Position? _currentPosition;
-  bool _isTestLocationMode = false;
   bool _isLoading = false;
   String? _errorMessage;
-
-  // Test Location default: Sector 4 Distribution Hub (18.5204, 73.8567)
-  static const double testLatitude = 18.5204;
-  static const double testLongitude = 73.8567;
-  static const String testLocationName = "Sector 4 — MG Road Junction";
+  LocationPermissionState _permissionState = LocationPermissionState.unknown;
 
   Position? get currentPosition => _currentPosition;
-  bool get isTestLocationMode => _isTestLocationMode;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  LocationPermissionState get permissionState => _permissionState;
 
-  double get effectiveLatitude => _isTestLocationMode || _currentPosition == null
-      ? testLatitude
-      : _currentPosition!.latitude;
+  bool get hasPosition => _currentPosition != null;
+  double? get effectiveLatitude => _currentPosition?.latitude;
+  double? get effectiveLongitude => _currentPosition?.longitude;
 
-  double get effectiveLongitude => _isTestLocationMode || _currentPosition == null
-      ? testLongitude
-      : _currentPosition!.longitude;
-
-  String get locationSourceLabel => _isTestLocationMode
-      ? "Test Location Mode ($testLocationName)"
-      : (_currentPosition != null ? "Live Phone GPS" : "Fallback ($testLocationName)");
-
-  void toggleTestLocationMode() {
-    _isTestLocationMode = !_isTestLocationMode;
-    notifyListeners();
+  String get locationSourceLabel {
+    if (_currentPosition != null) {
+      return 'Live GPS (${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)})';
+    }
+    switch (_permissionState) {
+      case LocationPermissionState.servicesDisabled:
+        return 'GPS Hardware Disabled';
+      case LocationPermissionState.denied:
+        return 'Permission Denied';
+      case LocationPermissionState.permanentlyDenied:
+        return 'Permission Blocked (Settings)';
+      default:
+        return 'GPS Unavailable';
+    }
   }
 
-  /// Obtains current GPS coordinates from the phone hardware
+  /// Checks device location status and requests native OS permission if needed
   Future<void> fetchDeviceLocation() async {
-    if (_isTestLocationMode) return;
-
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      // 1. Check if device location service (hardware GPS toggle) is on
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        _errorMessage = "GPS is disabled on device. Using development coordinates.";
+        _permissionState = LocationPermissionState.servicesDisabled;
+        _errorMessage = 'Device Location Service (GPS) is turned off. Please enable GPS.';
         _isLoading = false;
         notifyListeners();
         return;
       }
 
+      // 2. Check native permission status
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          _errorMessage = "Location permission denied. Using development coordinates.";
+          _permissionState = LocationPermissionState.denied;
+          _errorMessage = 'Location permission was denied. Nearby pole check requires GPS access.';
           _isLoading = false;
           notifyListeners();
           return;
@@ -63,21 +71,36 @@ class LocationService extends ChangeNotifier {
       }
 
       if (permission == LocationPermission.deniedForever) {
-        _errorMessage = "Location permission permanently denied. Enable in device settings.";
+        _permissionState = LocationPermissionState.permanentlyDenied;
+        _errorMessage = 'Location permission is permanently denied. Please enable in App Settings.';
         _isLoading = false;
         notifyListeners();
         return;
       }
 
+      // 3. Permission granted: query high-accuracy hardware position
+      _permissionState = LocationPermissionState.granted;
       _currentPosition = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 8),
+        timeLimit: const Duration(seconds: 10),
       );
+      _errorMessage = null;
     } catch (e) {
-      _errorMessage = "GPS acquisition error: $e";
+      _errorMessage = 'Failed to acquire GPS position: $e';
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
+
+  /// Deep link into Android/iOS App Settings for permanently denied permission
+  Future<void> openAppSettings() async {
+    await Geolocator.openAppSettings();
+  }
+
+  /// Deep link into device Location Settings for disabled GPS hardware
+  Future<void> openLocationSettings() async {
+    await Geolocator.openLocationSettings();
+  }
 }
+

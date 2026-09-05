@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/app_localizations.dart';
 import '../../../services/auth_service.dart';
 
 import '../../citizen/screens/citizen_home_screen.dart';
@@ -65,6 +66,48 @@ class _RoleShellScreenState extends State<RoleShellScreen> {
           ],
         ),
         actions: [
+          // Language Switcher
+          PopupMenuButton<AppLanguage>(
+            tooltip: 'Language',
+            offset: const Offset(0, 42),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            color: AppTheme.surfaceDark,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceDark,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white24, width: 1),
+                ),
+                child: Text(
+                  auth.currentLanguage.flag,
+                  style: const TextStyle(fontSize: 15),
+                ),
+              ),
+            ),
+            onSelected: (AppLanguage selected) => auth.setLanguage(selected),
+            itemBuilder: (context) => AppLanguage.values.map((lang) {
+              final isSelected = lang == auth.currentLanguage;
+              return PopupMenuItem<AppLanguage>(
+                value: lang,
+                child: Row(
+                  children: [
+                    Text(lang.flag, style: const TextStyle(fontSize: 16)),
+                    const SizedBox(width: 8),
+                    Text(
+                      lang.label,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? AppTheme.infoColor : Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: Chip(
@@ -84,6 +127,7 @@ class _RoleShellScreenState extends State<RoleShellScreen> {
           ),
           const SizedBox(width: 8),
         ],
+
       ),
       body: Column(
         children: [

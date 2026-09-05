@@ -104,7 +104,11 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
       latitude: loc.effectiveLatitude,
       longitude: loc.effectiveLongitude,
       poleId: _selectedPoleId,
-      address: _addressController.text.isNotEmpty ? _addressController.text : LocationService.testLocationName,
+      address: _addressController.text.isNotEmpty
+          ? _addressController.text
+          : (loc.hasPosition
+              ? 'GPS Location (${loc.effectiveLatitude?.toStringAsFixed(4)}, ${loc.effectiveLongitude?.toStringAsFixed(4)})'
+              : 'Reported Area'),
       hazardType: _selectedHazardType,
       description: _descriptionController.text.trim(),
       imageUrl: imageUrl,
@@ -226,8 +230,8 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
                   child: Row(
                     children: [
                       Icon(
-                        loc.isTestLocationMode ? Icons.science_outlined : Icons.my_location_rounded,
-                        color: loc.isTestLocationMode ? AppTheme.warningColor : AppTheme.infoColor,
+                        loc.hasPosition ? Icons.gps_fixed_rounded : Icons.gps_not_fixed_rounded,
+                        color: loc.hasPosition ? AppTheme.safeColor : AppTheme.warningColor,
                         size: 20,
                       ),
                       const SizedBox(width: 10),
@@ -240,26 +244,23 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
                               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                             ),
                             Text(
-                              '${loc.effectiveLatitude.toStringAsFixed(4)}° N, ${loc.effectiveLongitude.toStringAsFixed(4)}° E',
+                              loc.hasPosition
+                                  ? '${loc.effectiveLatitude?.toStringAsFixed(4)}° N, ${loc.effectiveLongitude?.toStringAsFixed(4)}° E'
+                                  : 'Tap refresh to acquire live GPS',
                               style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
                             ),
                           ],
                         ),
                       ),
-                      TextButton(
-                        onPressed: loc.toggleTestLocationMode,
-                        child: Text(
-                          loc.isTestLocationMode ? 'Use GPS' : 'Test Mode',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: loc.isTestLocationMode ? AppTheme.infoColor : AppTheme.warningColor,
-                          ),
-                        ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh_rounded, size: 20, color: AppTheme.infoColor),
+                        tooltip: 'Refresh GPS',
+                        onPressed: () => loc.fetchDeviceLocation(),
                       ),
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 16),
 
                 // Street / Landmark Address

@@ -97,22 +97,21 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const Divider(color: AppTheme.borderDark, height: 1),
-                SwitchListTile(
-                  secondary: Icon(
-                    locationService.isTestLocationMode ? Icons.science_outlined : Icons.gps_fixed_rounded,
-                    color: locationService.isTestLocationMode ? AppTheme.warningColor : AppTheme.infoColor,
+                ListTile(
+                  leading: Icon(
+                    locationService.hasPosition ? Icons.gps_fixed_rounded : Icons.gps_not_fixed_rounded,
+                    color: locationService.hasPosition ? AppTheme.safeColor : AppTheme.warningColor,
                   ),
-                  title: const Text('Test Location Mode'),
+                  title: const Text('GPS Hardware Location'),
                   subtitle: Text(
-                    locationService.isTestLocationMode
-                        ? 'Using Sector 4 / MG Road Test Coordinates'
-                        : 'Using Real Phone Hardware GPS',
+                    locationService.locationSourceLabel,
                     style: const TextStyle(fontSize: 12),
                   ),
-                  value: locationService.isTestLocationMode,
-                  onChanged: (val) {
-                    locationService.toggleTestLocationMode();
-                  },
+                  trailing: IconButton(
+                    icon: const Icon(Icons.refresh_rounded, size: 20),
+                    tooltip: 'Fetch Live GPS',
+                    onPressed: () => locationService.fetchDeviceLocation(),
+                  ),
                 ),
                 const Divider(color: AppTheme.borderDark, height: 1),
                 ListTile(

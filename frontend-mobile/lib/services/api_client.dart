@@ -161,10 +161,13 @@ class ApiClient {
 
   /// Fetches registered poles within radius from GET /api/v1/poles/nearby
   static Future<List<PoleModel>> getNearbyPoles({
-    required double latitude,
-    required double longitude,
+    double? latitude,
+    double? longitude,
     double radiusKm = 10.0,
   }) async {
+    if (latitude == null || longitude == null) {
+      return getPoles();
+    }
     try {
       final uri = Uri.parse('$baseUrl/poles/nearby?latitude=$latitude&longitude=$longitude&radius_km=$radiusKm');
       final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 5));
@@ -179,6 +182,7 @@ class ApiClient {
     }
     return getPoles();
   }
+
 
   /// Fetches all registered poles from GET /api/v1/poles
   static Future<List<PoleModel>> getPoles() async {
@@ -279,8 +283,8 @@ class ApiClient {
 
   /// Submits new citizen hazard report to POST /api/v1/hazard-reports
   static Future<Map<String, dynamic>> submitHazardReport({
-    required double latitude,
-    required double longitude,
+    double? latitude,
+    double? longitude,
     String? poleId,
     String? address,
     required String hazardType,
@@ -291,8 +295,8 @@ class ApiClient {
   }) async {
     try {
       final payload = {
-        'latitude': latitude,
-        'longitude': longitude,
+        'latitude': latitude ?? 0.0,
+        'longitude': longitude ?? 0.0,
         'pole_id': poleId,
         'address': address,
         'hazard_type': hazardType,
