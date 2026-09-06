@@ -117,7 +117,7 @@ class ProfileScreen extends StatelessWidget {
                 ListTile(
                   leading: const Icon(Icons.location_city_rounded, color: AppTheme.safeColor),
                   title: const Text('Assigned Municipal Zone'),
-                  subtitle: Text(user?.zone ?? 'Sector 1 — Shivajinagar'),
+                  subtitle: Text(user?.zone ?? 'Unassigned Municipal Zone'),
                 ),
               ],
             ),

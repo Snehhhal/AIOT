@@ -14,7 +14,7 @@ class PoleProvider extends ChangeNotifier {
   Timer? _pollingTimer;
 
   List<PoleModel> get poles => _poles;
-  PoleModel? get selectedPole => _selectedPole ?? (_poles.isNotEmpty ? _poles.first : null);
+  PoleModel? get selectedPole => _selectedPole;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   Map<String, List<SensorHistoryPoint>> get historyCache => _historyCache;
@@ -25,7 +25,7 @@ class PoleProvider extends ChangeNotifier {
   int get warningCount => _poles.where((p) => p.riskTier == RiskTier.warning).length;
   int get healthyCount => _poles.where((p) => p.riskTier == RiskTier.safe).length;
   double get averageHealth => _poles.isEmpty
-      ? 95.0
+      ? 0.0
       : _poles.map((p) => p.healthScore).reduce((a, b) => a + b) / _poles.length;
 
   PoleProvider() {
@@ -39,9 +39,6 @@ class PoleProvider extends ChangeNotifier {
     try {
       _poles = await ApiClient.getPoles();
       _errorMessage = null;
-      if (_poles.isNotEmpty && _selectedPole == null) {
-        _selectedPole = _poles.first;
-      }
     } catch (e) {
       _errorMessage = 'Failed to load poles: $e';
     } finally {
@@ -51,7 +48,11 @@ class PoleProvider extends ChangeNotifier {
   }
 
   void selectPole(String poleId) {
-    _selectedPole = _poles.firstWhere((p) => p.id == poleId, orElse: () => _poles.first);
+    try {
+      _selectedPole = _poles.firstWhere((p) => p.id == poleId);
+    } catch (_) {
+      _selectedPole = null;
+    }
     notifyListeners();
   }
 

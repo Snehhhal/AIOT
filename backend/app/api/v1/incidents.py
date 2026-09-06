@@ -335,7 +335,7 @@ async def citizen_report_hazard(report: CitizenReportCreate, db: AsyncSession = 
 
     pole_res = await db.execute(select(Pole).where(Pole.id == report.pole_id))
     pole = pole_res.scalar_one_or_none()
-    pole_ref = pole.id if pole else "P-001"
+    pole_ref = pole.id if pole else (report.pole_id or "POLE-CUSTOM")
 
     incident = Incident(
         id=inc_id,

@@ -9,6 +9,34 @@ from backend.app.core.seed import seed_initial_data
 async def setup_database():
     """Ensure schema tables and seed data exist before running tests."""
     await seed_initial_data()
+    from backend.app.core.database import AsyncSessionLocal
+    from backend.app.models.entities import Pole, SensorReading
+    from datetime import datetime, timezone
+    async with AsyncSessionLocal() as db:
+        for p_id in ["P-001", "P-002", "P-003", "P-004"]:
+            p = await db.get(Pole, p_id)
+            if not p:
+                db.add(Pole(
+                    id=p_id,
+                    serial_number=f"PL-TEST-{p_id}",
+                    name=f"Test Feeder Asset {p_id}",
+                    latitude=23.0,
+                    longitude=72.0,
+                    status="HEALTHY",
+                    health_score=90,
+                    risk_score=10,
+                    zone="Test Zone"
+                ))
+                db.add(SensorReading(
+                    pole_id=p_id,
+                    leakage_current=2.0,
+                    voltage=230.0,
+                    temperature=25.0,
+                    humidity=50.0,
+                    rain=False,
+                    recorded_at=datetime.now(timezone.utc)
+                ))
+        await db.commit()
 
 
 @pytest.mark.asyncio

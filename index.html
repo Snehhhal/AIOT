@@ -14,7 +14,7 @@
     .pulse-subtle { animation: pulse-subtle 2s infinite ease-in-out; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 antialiased p-2 md:p-6 flex flex-col items-center min-h-screen selection:bg-cyan-500 selection:text-slate-950">
+<body class="bg-slate-950 text-slate-100 antialiased p-0 md:p-6 flex flex-col items-center justify-center min-h-screen selection:bg-cyan-500 selection:text-slate-950">
 
   <!-- Global Audio Dispatch Notification Banner -->
   <div id="global-dispatch-toast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-[150] w-11/12 max-w-lg p-3.5 rounded-2xl bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 text-white shadow-2xl border border-rose-400/50 flex items-center justify-between gap-3 animate-bounce">
@@ -26,7 +26,7 @@
           <span class="px-1.5 py-0.2 rounded bg-white text-rose-950 text-[9px] font-extrabold">NEW</span>
         </h4>
         <p id="global-dispatch-msg" class="text-[11px] text-rose-100 font-medium line-clamp-1">
-          Citizen reported electrical sparking at Pole P-001!
+          Awaiting real-time dispatch alerts...
         </p>
       </div>
     </div>
@@ -35,36 +35,6 @@
         View Order
       </button>
       <button onclick="dismissDispatchToast()" class="p-1 text-white/80 hover:text-white text-sm font-bold">✕</button>
-    </div>
-  </div>
-
-  <!-- Header & Guidance Navigation -->
-  <div class="max-w-5xl w-full text-center mb-3 md:mb-5">
-    <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold mb-2 shadow-sm">
-      <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-      PoleGuard Enterprise Life Safety • 5 Roles • Real-Time AI & IoT
-    </div>
-    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white mb-1">
-      Electric Pole Leakage Detection & Safety Platform
-    </h1>
-    <p class="text-xs text-slate-400 max-w-2xl mx-auto">
-      Real database persistence, real-time GPS geolocation, live photo uploads, immediate technician dispatch, AI anomaly engine, and official downloadable safety audits.
-    </p>
-
-    <!-- Global Quick Utilities Toolbar -->
-    <div class="flex flex-wrap items-center justify-center gap-2 mt-3 text-xs font-bold">
-      <button onclick="openDatabaseExplorer()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 transition-all flex items-center gap-1.5 shadow">
-        <span>📊</span> Database Explorer
-      </button>
-      <button onclick="openRAGModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30 transition-all flex items-center gap-1.5 shadow">
-        <span>💬</span> AI Safety Assistant
-      </button>
-      <button onclick="recalibrateGPS()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 transition-all flex items-center gap-1.5 shadow">
-        <span>📍</span> <span id="btn-gps-text">Real GPS: Active</span>
-      </button>
-      <button onclick="toggleNetworkMode()" id="btn-network" class="px-3 py-1.5 rounded-xl bg-slate-800 text-emerald-400 border border-emerald-500/40 hover:bg-slate-700 transition-all flex items-center gap-1.5 shadow">
-        <span>📶</span> <span id="network-status-text">Online (:8000)</span>
-      </button>
     </div>
   </div>
 
@@ -90,7 +60,7 @@
       </div>
 
       <!-- App Top Bar -->
-      <div class="px-4 py-2 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/70 backdrop-blur-md">
+      <div id="app-top-bar" class="px-4 py-2 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/70 backdrop-blur-md">
         <div class="flex items-center gap-2">
           <button id="btn-header-back" onclick="navigateBack()" class="hidden p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-bold">
             ← Back
@@ -238,11 +208,7 @@
       <div>
         <label class="text-[11px] text-slate-400 font-medium">Nearest Pole Identifier</label>
         <select id="report-pole-id" onchange="handlePoleSelectChange(this.value)" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-mono">
-          <option value="P-001">Pole #01 • Local Distribution Feeder (~4m)</option>
-          <option value="P-002">Pole #02 • Street Crossing Feeder (~16m)</option>
-          <option value="P-003">Pole #03 • Transformer Step-Down Base (~32m)</option>
-          <option value="P-004">Pole #04 • Main Line Feeder Junction (~55m)</option>
-          <option value="P-005">Pole #05 • Service Drop Distribution (~78m)</option>
+          <option value="" disabled selected>-- Select a pole --</option>
           <option value="CUSTOM">➕ Custom: Enter Physical Pole Tag / Landmark</option>
         </select>
         <div id="custom-pole-box" class="hidden mt-2 bg-cyan-950/20 border border-cyan-500/30 rounded-xl p-2 space-y-1">
@@ -387,7 +353,7 @@
       : 'http://localhost:8000/api/v1';
 
     // Application Navigation Views: 'ROLE_SELECT' | 'AUTH' | 'DASHBOARD'
-    let currentView = 'ROLE_SELECT';
+    let currentView = 'SPLASH';
     let selectedAuthRole = 'CITIZEN';
     let authTab = 'signin';
     let currentRole = 'CITIZEN';
@@ -398,7 +364,7 @@
     let isSubmittingAuth = false;
 
     // Active Operational State
-    let activePole = 'P-001';
+    let activePole = null;
     let workOrderStatus = 'ASSIGNED';
     let workOrderNotes = 'Initial automated dispatch via AI & IoT alert.';
     let selectedHazardFile = null;
@@ -406,17 +372,19 @@
     let activeDbTab = 'reports';
 
     // Real-Time GPS & Geolocation Engine State
-    let currentReportCoords = { lat: 18.5204, lng: 73.8567, accuracy: 15 };
+    let currentReportCoords = { lat: null, lng: null, accuracy: null };
     let currentLiveLocation = {
       lat: null,
       lng: null,
       accuracy: null,
-      address: 'Detecting live address...',
+      address: '',
       locality: '',
       city: '',
       state: '',
-      source: 'Detecting...',
-      isReal: false
+      source: '',
+      isReal: false,
+      permissionDenied: false,
+      unavailable: false
     };
     let isRealGPSLocked = false;
     let gpsWatchId = null;
@@ -429,73 +397,25 @@
     let iotSimulation = {
       voltage: 230.0,
       threshold: 200.0,
-      humanPresent: true,
+      humanPresent: false,
       faultDetected: false,
       buzzerActive: false,
       powerCutoff: false,
       stage: 'MONITORING'
     };
 
-    // In-memory Database Synchronizer
+    // In-memory Database Synchronizer (Starts empty - loaded from real backend)
     const dbStore = {
-      hazardReports: [
-        {
-          id: 'REP-D4D408',
-          pole_id: 'P-001',
-          hazard_type: 'Damaged Wire / Sparking',
-          description: 'Sparks near cross-arm bracket, exposed copper wire swaying near pedestrian route.',
-          reporter_name: 'Citizen User',
-          reporter_phone: '+91 98765 43210',
-          latitude: 23.2156,
-          longitude: 72.6369,
-          address: 'Kudasan Feeder, Sector 4, Gandhinagar',
-          image_url: null,
-          status: 'REPORTED',
-          inspection_notes: null,
-          inspection_image_url: null,
-          created_at: new Date().toLocaleString()
-        }
-      ],
-      workOrders: [
-        {
-          id: 'WO-8410',
-          pole_id: 'P-001',
-          technician: 'Kailas Jadhav',
-          hazard_type: 'Damaged Wire / Sparking',
-          status: 'ASSIGNED',
-          priority: 'HIGH',
-          timestamp: new Date().toLocaleTimeString(),
-          notes: 'Emergency automated dispatch via AI & IoT alert.'
-        }
-      ],
+      hazardReports: [],
+      workOrders: [],
       alerts: [],
       users: [],
       auditLogs: [],
       backendPoles: []
     };
 
-    // Dynamic Telemetry Sensor Matrix (No hardcoded Gandhi Square / FC Road!)
-    let telemetryData = {
-      'P-001': { name: 'Pole #01 • Local Distribution Feeder', leakage_ma: 1.8, voltage_v: 1.2, tilt_deg: 0.3, temp_c: 28.0, rain: false, risk_score: 8, risk_tier: 'NORMAL', status: 'HEALTHY' },
-      'P-002': { name: 'Pole #02 • Street Crossing Feeder Pillar', leakage_ma: 16.5, voltage_v: 18.0, tilt_deg: 1.1, temp_c: 31.0, rain: false, risk_score: 38, risk_tier: 'WARNING', status: 'WARNING' },
-      'P-003': { name: 'Pole #03 • Transformer Step-Down Base', leakage_ma: 35.5, voltage_v: 62.0, tilt_deg: 2.4, temp_c: 24.5, rain: true, risk_score: 88, risk_tier: 'CRITICAL', status: 'CRITICAL' },
-      'P-004': { name: 'Pole #04 • Main Line Feeder Junction', leakage_ma: 48.0, voltage_v: 85.0, tilt_deg: 21.5, temp_c: 29.0, rain: true, risk_score: 98, risk_tier: 'EMERGENCY', status: 'EMERGENCY' },
-      'P-005': { name: 'Pole #05 • Service Drop Distribution', leakage_ma: 2.2, voltage_v: 3.1, tilt_deg: 0.5, temp_c: 27.5, rain: false, risk_score: 11, risk_tier: 'NORMAL', status: 'HEALTHY' }
-    };
-
-    // Update pole names with actual real-time detected locality/city
-    function updateTelemetryWithRealLocation(locality, city) {
-      const areaLabel = locality || city || 'Current Location';
-      telemetryData['P-001'].name = `Pole #01 • Near ${areaLabel} (Nearest, ~4m)`;
-      telemetryData['P-002'].name = `Pole #02 • ${areaLabel} Crossing Feeder (~16m)`;
-      telemetryData['P-003'].name = `Pole #03 • ${areaLabel} Transformer Step-Down (~32m)`;
-      telemetryData['P-004'].name = `Pole #04 • ${areaLabel} High-Load Pillar (~55m)`;
-      telemetryData['P-005'].name = `Pole #05 • ${areaLabel} Distribution Line (~78m)`;
-      renderPoleSelectOptions();
-      if (currentView === 'DASHBOARD') {
-        renderCurrentView();
-      }
-    }
+    // Dynamic Telemetry Sensor Matrix (Empty on boot - populated from real DB/GPS poles only)
+    let telemetryData = {};
 
     function renderPoleSelectOptions() {
       const select = document.getElementById('report-pole-id');
@@ -503,18 +423,16 @@
       const currentSelected = select.value;
       let html = '';
       
-      // Dynamic Nearby Poles (localized to user's real location)
-      Object.keys(telemetryData).forEach(pId => {
-        const p = telemetryData[pId];
-        html += `<option value="${pId}">${pId} • ${p.name}</option>`;
-      });
+      const poles = (dbStore.backendPoles && dbStore.backendPoles.length > 0)
+        ? dbStore.backendPoles
+        : Object.keys(telemetryData).map(id => ({ id, name: telemetryData[id].name }));
 
-      // Database Poles (if loaded from backend API)
-      if (dbStore.backendPoles && dbStore.backendPoles.length > 0) {
-        dbStore.backendPoles.forEach(p => {
-          if (!telemetryData[p.id]) {
-            html += `<option value="${p.id}">${p.id} • ${p.name || p.address}</option>`;
-          }
+      if (poles.length === 0) {
+        html += `<option value="" disabled ${!currentSelected ? 'selected' : ''}>-- No nearby poles found --</option>`;
+      } else {
+        html += `<option value="" disabled ${!currentSelected ? 'selected' : ''}>-- Select a pole --</option>`;
+        poles.forEach(p => {
+          html += `<option value="${p.id}">${p.id} • ${p.name || p.address || 'Pole ' + p.id}</option>`;
         });
       }
 
@@ -540,6 +458,11 @@
       }
     }
 
+    function selectPole(poleId) {
+      activePole = poleId;
+      renderCurrentView();
+    }
+
     async function fetchPolesFromBackend() {
       try {
         const res = await fetch(`${API_BASE_URL}/poles`);
@@ -547,7 +470,23 @@
           const data = await res.json();
           if (data && data.data && Array.isArray(data.data)) {
             dbStore.backendPoles = data.data;
+            data.data.forEach(p => {
+              telemetryData[p.id] = {
+                name: p.name || p.address || `Pole ${p.id}`,
+                leakage_ma: p.leakage_current || 0.0,
+                voltage_v: p.voltage || 0.0,
+                tilt_deg: p.tilt_angle || 0.0,
+                temp_c: p.temperature || 28.0,
+                rain: p.rain || false,
+                risk_score: p.risk_score || 0,
+                risk_tier: p.risk_tier || 'NORMAL',
+                status: p.status || 'HEALTHY'
+              };
+            });
             renderPoleSelectOptions();
+            if (currentView === 'DASHBOARD') {
+              renderCurrentView();
+            }
           }
         }
       } catch (e) {
@@ -555,16 +494,45 @@
       }
     }
 
+    async function fetchNearbyPolesFromBackend(lat, lng) {
+      if (lat == null || lng == null) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/poles/nearby?latitude=${lat}&longitude=${lng}&radius_km=15`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.data && Array.isArray(data.data)) {
+            dbStore.backendPoles = data.data;
+            data.data.forEach(p => {
+              telemetryData[p.id] = {
+                name: p.name || p.address || `Pole ${p.id}`,
+                leakage_ma: p.leakage_current || 0.0,
+                voltage_v: p.voltage || 0.0,
+                tilt_deg: p.tilt_angle || 0.0,
+                temp_c: p.temperature || 28.0,
+                rain: p.rain || false,
+                risk_score: p.risk_score || 0,
+                risk_tier: p.risk_tier || 'NORMAL',
+                status: p.status || 'HEALTHY'
+              };
+            });
+            renderPoleSelectOptions();
+            if (currentView === 'DASHBOARD') {
+              renderCurrentView();
+            }
+          }
+        }
+      } catch (e) {
+        console.debug('Nearby poles fetch notice:', e);
+      }
+    }
+
     // ========================================================================
     // 2. Real-Time Geolocation & Reverse Geocoding Engine
     // ========================================================================
     async function initRealTimeGPS() {
-      // 1. First immediately try fast IP-based location in parallel
-      fetchFallbackIPLocation();
-
-      // 2. Query high-accuracy device GPS
       if (!navigator.geolocation) {
-        updateGPSUI(false, "Browser does not support GPS hardware");
+        currentLiveLocation.unavailable = true;
+        updateGPSUI(false, "Current location unavailable.");
         return;
       }
 
@@ -574,18 +542,30 @@
         },
         async (error) => {
           console.warn("GPS Geolocation notice:", error.message);
-          await fetchFallbackIPLocation();
+          if (error.code === error.PERMISSION_DENIED) {
+            currentLiveLocation.permissionDenied = true;
+            updateGPSUI(false, "Location permission is required to show nearby poles.");
+          } else {
+            currentLiveLocation.unavailable = true;
+            updateGPSUI(false, "Current location unavailable.");
+          }
         },
         { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
       );
 
-      // 3. Continuous position watch
+      // Continuous position watch
       try {
         gpsWatchId = navigator.geolocation.watchPosition(
           async (pos) => {
             await handleGPSPosition(pos, 'Device GPS (Active Watch)');
           },
-          (err) => console.debug("GPS watch:", err.message),
+          (err) => {
+            console.debug("GPS watch:", err.message);
+            if (err.code === err.PERMISSION_DENIED) {
+              currentLiveLocation.permissionDenied = true;
+              updateGPSUI(false, "Location permission is required to show nearby poles.");
+            }
+          },
           { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
         );
       } catch (e) {
@@ -606,12 +586,19 @@
           },
           async (err) => {
             console.warn("Recalibration GPS notice:", err.message);
-            await fetchFallbackIPLocation();
+            if (err.code === err.PERMISSION_DENIED) {
+              currentLiveLocation.permissionDenied = true;
+              updateGPSUI(false, "Location permission is required to show nearby poles.");
+            } else {
+              currentLiveLocation.unavailable = true;
+              updateGPSUI(false, "Current location unavailable.");
+            }
           },
           { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
       } else {
-        await fetchFallbackIPLocation();
+        currentLiveLocation.unavailable = true;
+        updateGPSUI(false, "Current location unavailable.");
       }
     }
 
@@ -626,40 +613,16 @@
       currentLiveLocation.accuracy = currentReportCoords.accuracy;
       currentLiveLocation.source = sourceLabel;
       currentLiveLocation.isReal = true;
+      currentLiveLocation.permissionDenied = false;
+      currentLiveLocation.unavailable = false;
 
       updateGPSUI(true);
 
       // Perform real-time reverse geocoding to resolve street & city
       await resolveReverseGeocode(currentReportCoords.lat, currentReportCoords.lng);
-    }
 
-    async function fetchFallbackIPLocation() {
-      try {
-        const res = await fetch('https://freeipapi.com/api/json');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.latitude && data.longitude) {
-            if (!isRealGPSLocked) {
-              currentReportCoords.lat = parseFloat(data.latitude.toFixed(5));
-              currentReportCoords.lng = parseFloat(data.longitude.toFixed(5));
-              currentReportCoords.accuracy = 500;
-              currentLiveLocation.lat = currentReportCoords.lat;
-              currentLiveLocation.lng = currentReportCoords.lng;
-              currentLiveLocation.locality = data.cityName || '';
-              currentLiveLocation.city = data.cityName || '';
-              currentLiveLocation.state = data.regionName || '';
-              currentLiveLocation.address = [data.cityName, data.regionName, data.countryName].filter(Boolean).join(', ');
-              currentLiveLocation.source = 'Network Location (IP)';
-              currentLiveLocation.isReal = true;
-
-              updateGPSUI(true);
-              updateTelemetryWithRealLocation(currentLiveLocation.locality, currentLiveLocation.city);
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("IP Geolocation fallback notice:", e);
-      }
+      // Fetch nearby registered poles from backend using real coordinates
+      await fetchNearbyPolesFromBackend(currentReportCoords.lat, currentReportCoords.lng);
     }
 
     async function resolveReverseGeocode(lat, lng) {
@@ -680,7 +643,6 @@
           currentLiveLocation.address = parts.length > 0 ? parts.join(', ') : `${lat}° N, ${lng}° E`;
           
           updateGPSUI(true);
-          updateTelemetryWithRealLocation(locality, city);
           return;
         }
       } catch (err) {
@@ -700,7 +662,6 @@
             currentLiveLocation.locality = locality || city;
             currentLiveLocation.city = city;
             updateGPSUI(true);
-            updateTelemetryWithRealLocation(locality, city);
           }
         }
       } catch (nomErr) {
@@ -717,7 +678,6 @@
         currentLiveLocation.isReal = true;
         currentLiveLocation.source = 'Manual Entry';
         updateGPSUI(true);
-        updateTelemetryWithRealLocation(custom.trim(), '');
       }
     }
 
@@ -728,10 +688,9 @@
       const modalAddress = document.getElementById('gps-address-label');
       const modalStatus = document.getElementById('gps-status-label');
 
-      const coordString = `${currentReportCoords.lat}° N, ${currentReportCoords.lng}° E`;
-      const addrString = currentLiveLocation.address || 'Locating physical address...';
-
-      if (isReal) {
+      if (isReal && currentReportCoords.lat != null) {
+        const coordString = `${currentReportCoords.lat}° N, ${currentReportCoords.lng}° E`;
+        const addrString = currentLiveLocation.address || 'Real-time GPS locked';
         if (tickerText) {
           tickerText.innerHTML = `🛰️ Realtime: <b>${addrString}</b> (${coordString})`;
         }
@@ -744,14 +703,15 @@
           modalStatus.innerHTML = `<span class="text-emerald-400 font-bold">✓ Live Location Active (${currentLiveLocation.source || 'GPS'})</span>`;
         }
       } else {
+        const statusMsg = message || (currentLiveLocation.permissionDenied ? "Location permission is required to show nearby poles." : "Current location unavailable.");
         if (tickerText) {
-          tickerText.innerHTML = `📍 Locating: <b>${coordString}</b> (${message || 'Connecting'})`;
+          tickerText.innerHTML = `📍 <b>${statusMsg}</b>`;
         }
-        if (btnText) btnText.innerText = 'GPS: Acquiring...';
-        if (modalCoords) modalCoords.innerText = coordString;
-        if (modalAddress) modalAddress.innerText = addrString;
+        if (btnText) btnText.innerText = 'GPS: Off';
+        if (modalCoords) modalCoords.innerText = 'Coordinates: Unavailable';
+        if (modalAddress) modalAddress.innerText = 'Location permission or GPS needed';
         if (modalStatus) {
-          modalStatus.innerHTML = `<span class="text-amber-400 font-bold">⚠️ ${message || 'Acquiring GPS / IP location'}</span>`;
+          modalStatus.innerHTML = `<span class="text-amber-400 font-bold">⚠️ ${statusMsg}</span>`;
         }
       }
     }
@@ -785,13 +745,13 @@
       // Inject into Technician work orders table
       const newWO = {
         id: `WO-${Math.floor(1000 + Math.random() * 9000)}`,
-        pole_id: report.pole_id || 'P-001',
+        pole_id: report.pole_id || (activePole || 'POLE-CUSTOM'),
         technician: 'Field Dispatch Queue',
         hazard_type: report.hazard_type || 'Sparking / Leakage',
         status: 'ASSIGNED',
         priority: 'EMERGENCY',
         timestamp: new Date().toLocaleTimeString(),
-        notes: `Citizen Report: ${report.description}`
+        notes: `Citizen Report: ${report.description || 'Dispatched from field report'}`
       };
       dbStore.workOrders.unshift(newWO);
 
@@ -799,7 +759,7 @@
       const toast = document.getElementById('global-dispatch-toast');
       const msg = document.getElementById('global-dispatch-msg');
       if (toast && msg) {
-        msg.innerText = `[${report.pole_id || 'P-001'}] ${report.hazard_type || 'Electrical Hazard'}: ${report.description || 'Dispatched to queue'}`;
+        msg.innerText = `[${report.pole_id || (activePole || 'POLE-CUSTOM')}] ${report.hazard_type || 'Electrical Hazard'}: ${report.description || 'Dispatched to queue'}`;
         toast.classList.remove('hidden');
       }
 
@@ -836,6 +796,9 @@
       if (currentView === 'AUTH') {
         currentView = 'ROLE_SELECT';
         renderCurrentView();
+      } else if (currentView === 'ROLE_SELECT') {
+        currentView = 'SPLASH';
+        renderCurrentView();
       } else if (currentView === 'DASHBOARD') {
         currentView = 'ROLE_SELECT';
         renderCurrentView();
@@ -860,9 +823,41 @@
       const backBtn = document.getElementById('btn-header-back');
       const bottomNav = document.getElementById('bottom-nav-bar');
       const badge = document.getElementById('badge-connectivity');
+      const topBar = document.getElementById('app-top-bar');
+      const gpsTicker = document.getElementById('gps-live-ticker');
+      const t = i18n[currentAppLanguage] || i18n.en;
 
-      // Update Back Button Visibility
+      // VIEW 0: SPLASH / WELCOME SCREEN
+      if (currentView === 'SPLASH') {
+        if (topBar) topBar.classList.add('hidden');
+        if (gpsTicker) gpsTicker.classList.add('hidden');
+        if (backBtn) backBtn.classList.add('hidden');
+        if (logoutBtn) logoutBtn.classList.add('hidden');
+        if (bottomNav) bottomNav.classList.add('hidden');
+        renderSplashScreen();
+        return;
+      }
+
+      // Restore Top Bar & GPS Ticker for other views
+      if (topBar) topBar.classList.remove('hidden');
+      if (gpsTicker) gpsTicker.classList.remove('hidden');
+
+      // VIEW 1: ROLE SELECTION SCREEN
       if (currentView === 'ROLE_SELECT') {
+        if (backBtn) backBtn.classList.add('hidden');
+        if (logoutBtn) logoutBtn.classList.add('hidden');
+        if (bottomNav) bottomNav.classList.add('hidden');
+        if (badge) {
+          badge.innerText = 'SELECT ROLE';
+          badge.className = 'px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30';
+        }
+        title.innerHTML = `<span>🛡️</span> ${t.appName}`;
+        subtitle.innerText = t.selectRoleTitle;
+        avatar.innerText = '⚡';
+        avatar.className = 'w-6 h-6 rounded-full bg-cyan-600 text-white font-bold flex items-center justify-center text-[10px] shadow';
+        renderRoleSelectionScreen();
+        return;
+      }
         if (backBtn) backBtn.classList.add('hidden');
         if (logoutBtn) logoutBtn.classList.add('hidden');
         if (bottomNav) bottomNav.classList.add('hidden');
@@ -896,13 +891,207 @@
     // ========================================================================
     // 5. VIEW 1: FIRST SCREEN — ALL ROLES CONTAINER BOXES
     // ========================================================================
+    
+    // ========================================================================
+    // Trilingual Localization (Matching Flutter app_localizations.dart)
+    // ========================================================================
+    let currentAppLanguage = 'en'; // 'en' | 'hi' | 'mr'
+
+    const i18n = {
+      en: {
+        appName: 'PoleGuard Life Safety',
+        welcomeTitle: 'Welcome to PoleGuard',
+        welcomeSubtitle: 'AI & IoT Electric Leakage Prevention Platform',
+        selectRoleTitle: 'Select User Type',
+        selectRoleSubtitle: 'Choose your portal to login or register',
+        roleCitizenTitle: 'Citizen / Public Safety',
+        roleCitizenTagline: 'Report dangerous sparking poles with phone camera & live GPS, check safe zones, and trigger emergency SOS.',
+        roleCitizenBadge: 'Public Access',
+        roleTechnicianTitle: 'Field Technician (Lineman)',
+        roleTechnicianTagline: 'Immediate real-time citizen alert dispatch, active work orders, diagnostic repair checklists, and proof upload.',
+        roleTechnicianBadge: 'Field Operations',
+        roleEngineerTitle: 'Electrical Engineer',
+        roleEngineerTagline: 'Substation telemetry matrix (mA, Volts, tilt, rain), AI Random Forest anomaly classification, and risk heatmaps.',
+        roleEngineerBadge: 'Substation & Grid',
+        roleAuthorityTitle: 'Municipal Authority',
+        roleAuthorityTagline: 'City safety governance, emergency remote grid power cutoff, inter-agency disaster dispatch, and audit compliance.',
+        roleAuthorityBadge: 'Executive Governance',
+        roleAdminTitle: 'System Administrator',
+        roleAdminTagline: 'Live Database Explorer (show all database data), IoT fault simulation controls, and complete data export.',
+        roleAdminBadge: 'Database & Simulator',
+        loginBtn: 'Login',
+        registerBtn: 'Register',
+        getStartedBtn: 'Get Started — Choose Role',
+        publicLifeSafety: 'Public Life Safety',
+        publicLifeSafetyDesc: 'Real-time alerts, safe zones & photo reporting.',
+        liveIotTelemetry: 'Live IoT Telemetry',
+        liveIotTelemetryDesc: 'Leakage current (mA), touch voltage & tilt angle.',
+        aiDecisionEngine: 'AI Decision Engine',
+        aiDecisionEngineDesc: 'Random Forest tabular prediction & risk evaluation.',
+        fiveRoles: '5 Operational Roles',
+        fiveRolesDesc: 'Dedicated workflows for Citizens, Linemen, Engineers, Authorities & Admins.'
+      },
+      hi: {
+        appName: 'पोलगार्ड जीवन सुरक्षा',
+        welcomeTitle: 'पोलगार्ड में आपका स्वागत है',
+        welcomeSubtitle: 'एआई और आईओटी विद्युत रिसाव रोकथाम प्रणाली',
+        selectRoleTitle: 'उपयोगकर्ता प्रकार चुनें',
+        selectRoleSubtitle: 'लॉगिन या पंजीकरण के लिए अपना पोर्टल चुनें',
+        roleCitizenTitle: 'नागरिक / जन सुरक्षा',
+        roleCitizenTagline: 'कैमरा और लाइव जीपीएस से खतरनाक खंभों की रिपोर्ट करें, सुरक्षित क्षेत्र जांचें और आपातकालीन एसओएस भेजें।',
+        roleCitizenBadge: 'जनता पहुंच',
+        roleTechnicianTitle: 'फील्ड तकनीशियन (लाइनमैन)',
+        roleTechnicianTagline: 'वास्तविक समय नागरिक अलर्ट प्रेषण, सक्रिय कार्य आदेश, मरम्मत चेकलिस्ट और कार्य प्रमाण अपलोड।',
+        roleTechnicianBadge: 'फील्ड संचालन',
+        roleEngineerTitle: 'विद्युत अभियंता',
+        roleEngineerTagline: 'सबस्टेशन टेलीमेट्री (mA, वोल्ट, झुकाव, बारिश), एआई विसंगति वर्गीकरण और जोखिम हीटमैप।',
+        roleEngineerBadge: 'सबस्टेशन एवं ग्रिड',
+        roleAuthorityTitle: 'नगरपालिका प्राधिकरण',
+        roleAuthorityTagline: 'नगर सुरक्षा शासन, आपातकालीन रिमोट पावर कट-ऑफ, आपदा प्रेषण और ऑडिट अनुपालन।',
+        roleAuthorityBadge: 'कार्यकारी शासन',
+        roleAdminTitle: 'सिस्टम प्रशासक',
+        roleAdminTagline: 'लाइव डेटाबेस एक्सप्लोरर, आईओटी दोष सिमुलेशन और पूर्ण डेटा नियंत्रण।',
+        roleAdminBadge: 'डेटाबेस एवं सिमुलेटर',
+        loginBtn: 'लॉगिन करें',
+        registerBtn: 'पंजीकरण करें',
+        getStartedBtn: 'प्रारंभ करें — भूमिका चुनें',
+        publicLifeSafety: 'सार्वजनिक जीवन सुरक्षा',
+        publicLifeSafetyDesc: 'रीयल-टाइम अलर्ट, सुरक्षित क्षेत्र और फोटो रिपोर्टिंग।',
+        liveIotTelemetry: 'लाइव आईओटी टेलीमेट्री',
+        liveIotTelemetryDesc: 'रिसाव करंट (mA), स्पर्श वोल्टेज और झुकाव कोण निगरानी।',
+        aiDecisionEngine: 'एआई निर्णय इंजन',
+        aiDecisionEngineDesc: 'रैंडम फ़ॉरेस्ट भविष्यवाणी और सुरक्षा नियम मूल्यांकन।',
+        fiveRoles: '5 परिचालन भूमिकाएँ',
+        fiveRolesDesc: 'नागरिकों, लाइनमैन, इंजीनियरों, अधिकारियों और व्यवस्थापकों के लिए कार्यप्रवाह।'
+      },
+      mr: {
+        appName: 'पोलगार्ड जीवन सुरक्षा',
+        welcomeTitle: 'पोलगार्ड मध्ये आपले स्वागत आहे',
+        welcomeSubtitle: 'एआय आणि आयओटी विद्युत गळती प्रतिबंध प्रणाली',
+        selectRoleTitle: 'वापरकर्ता प्रकार निवडा',
+        selectRoleSubtitle: 'लॉगिन किंवा नोंदणीसाठी आपले पोर्टल निवडा',
+        roleCitizenTitle: 'नागरिक / सार्वजनिक सुरक्षा',
+        roleCitizenTagline: 'कॅमेरा आणि थेट जीपीएस द्वारे धोकादायक खांबांची तक्रार करा, सुरक्षित क्षेत्र तपासा आणि आणीबाणी एसओएस पाठवा.',
+        roleCitizenBadge: 'सार्वजनिक प्रवेश',
+        roleTechnicianTitle: 'फील्ड तंत्रज्ञ (लाइनमन)',
+        roleTechnicianTagline: 'थेट नागरिक अलर्ट पाठवणे, सक्रिय कामाचे आदेश, दुरुस्ती चेकलिस्ट आणि कामाचा फोटो पुरावा अपलोड.',
+        roleTechnicianBadge: 'फील्ड ऑपरेशन्स',
+        roleEngineerTitle: 'विद्युत अभियंता',
+        roleEngineerTagline: 'सबस्टेशन टेलिमेट्री (mA, व्होल्ट, कल, पाऊस), एआय विसंगती वर्गीकरण आणि जोखीम नकाशे.',
+        roleEngineerBadge: 'सबस्टेशन आणि ग्रिड',
+        roleAuthorityTitle: 'महानगरपालिका प्राधिकरण',
+        roleAuthorityTagline: 'शहर सुरक्षा प्रशासन, तात्काळ रिमोट वीज पुरवठा बंद करणे आणि ऑडिट अहवाल.',
+        roleAuthorityBadge: 'कार्यकारी प्रशासन',
+        roleAdminTitle: 'सिस्टम प्रशासक',
+        roleAdminTagline: 'थेट डेटाबेस एक्सप्लोरर, आयओटी फॉल्ट सिम्युलेशन नियंत्रणे आणि डेटा व्यवस्थापन.',
+        roleAdminBadge: 'डेटाबेस आणि सिम्युलेटर',
+        loginBtn: 'लॉगिन',
+        registerBtn: 'नोंदणी करा',
+        getStartedBtn: 'सुरू करा — भूमिका निवडा',
+        publicLifeSafety: 'सार्वजनिक जीवन सुरक्षा',
+        publicLifeSafetyDesc: 'रीअल-टाइम अलर्ट, सुरक्षित क्षेत्र आणि फोटो रिपोर्टिंग.',
+        liveIotTelemetry: 'लाइव्ह आयओटी टेलिमेट्री',
+        liveIotTelemetryDesc: 'गळती करंट (mA), स्पर्श व्होल्टेज आणि कल कोन निरीक्षण.',
+        aiDecisionEngine: 'एआय निर्णय इंजिन',
+        aiDecisionEngineDesc: 'रँडम फॉरेस्ट मॉडेल आणि सुरक्षा नियमांचे मूल्यमापन.',
+        fiveRoles: '५ कार्य भूमिका',
+        fiveRolesDesc: 'नागरिक, लाइनमन, अभियंता, प्राधिकरण आणि प्रशासकांसाठी समर्पित कार्यप्रवाह.'
+      }
+    };
+
+    function setAppLanguage(lang) {
+      currentAppLanguage = lang;
+      renderCurrentView();
+    }
+
+    function goToRoleSelection() {
+      currentView = 'ROLE_SELECT';
+      renderCurrentView();
+    }
+
+    function renderSplashScreen() {
+      const container = document.getElementById('screen-content');
+      const t = i18n[currentAppLanguage] || i18n.en;
+      container.innerHTML = `
+        <div class="flex flex-col items-center justify-between min-h-[660px] h-full py-4 text-center">
+          <div class="flex-1 flex flex-col items-center justify-center space-y-5 w-full">
+            <!-- Electric Shield Logo with Animation matching Flutter SplashScreen -->
+            <div class="relative">
+              <div class="w-24 h-24 rounded-full bg-cyan-500/15 border-2 border-cyan-400 flex items-center justify-center shadow-[0_0_35px_rgba(6,182,212,0.35)] animate-pulse">
+                <span class="text-5xl">⚡</span>
+              </div>
+              <div class="absolute -inset-1 rounded-full border border-cyan-500/30 animate-ping opacity-25"></div>
+            </div>
+
+            <div>
+              <h2 class="text-2xl font-black tracking-tight text-white">${t.welcomeTitle}</h2>
+              <p class="text-xs font-bold text-cyan-400 tracking-wider uppercase mt-0.5">${t.welcomeSubtitle}</p>
+              <p class="text-[11px] text-slate-400 mt-2 max-w-xs leading-relaxed mx-auto">
+                AI and IoT-based electric pole leakage detection and life safety platform for municipal utility infrastructure.
+              </p>
+            </div>
+
+            <!-- 4 Feature Pillars matching Flutter WelcomeScreen -->
+            <div class="w-full space-y-2 text-left bg-slate-900/90 border border-slate-800/80 rounded-2xl p-3 shadow-lg">
+              <div class="flex items-start gap-2.5">
+                <span class="text-sm p-1 rounded-lg bg-emerald-500/15 text-emerald-400 shrink-0">🛡️</span>
+                <div>
+                  <h5 class="text-xs font-extrabold text-white">${t.publicLifeSafety}</h5>
+                  <p class="text-[10px] text-slate-400">${t.publicLifeSafetyDesc}</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-2.5">
+                <span class="text-sm p-1 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">📡</span>
+                <div>
+                  <h5 class="text-xs font-extrabold text-white">${t.liveIotTelemetry}</h5>
+                  <p class="text-[10px] text-slate-400">${t.liveIotTelemetryDesc}</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-2.5">
+                <span class="text-sm p-1 rounded-lg bg-cyan-500/15 text-cyan-400 shrink-0">🧠</span>
+                <div>
+                  <h5 class="text-xs font-extrabold text-white">${t.aiDecisionEngine}</h5>
+                  <p class="text-[10px] text-slate-400">${t.aiDecisionEngineDesc}</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-2.5">
+                <span class="text-sm p-1 rounded-lg bg-purple-500/15 text-purple-400 shrink-0">👥</span>
+                <div>
+                  <h5 class="text-xs font-extrabold text-white">${t.fiveRoles}</h5>
+                  <p class="text-[10px] text-slate-400">${t.fiveRolesDesc}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action CTA Button matching Flutter WelcomeScreen -->
+          <div class="w-full space-y-2 pt-3">
+            <button onclick="goToRoleSelection()" class="w-full py-3.5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/30 transition-all flex items-center justify-center gap-2">
+              <span>${t.getStartedBtn}</span>
+              <span>→</span>
+            </button>
+            <p class="text-[9px] text-slate-500 font-mono">v2.4.0 • Municipal IoT Safety Grid</p>
+          </div>
+        </div>
+      `;
+    }
+
     function renderRoleSelectionScreen() {
       const container = document.getElementById('screen-content');
+      const t = i18n[currentAppLanguage] || i18n.en;
       container.innerHTML = `
         <div class="space-y-2.5 pt-0.5">
-          <div class="text-center pb-1">
-            <h3 class="text-sm font-black text-white">Welcome to PoleGuard</h3>
-            <p class="text-[10px] text-slate-400">Choose your portal to login or register</p>
+          <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+            <div>
+              <h3 class="text-sm font-black text-white">${t.selectRoleTitle}</h3>
+              <p class="text-[10px] text-slate-400">${t.selectRoleSubtitle}</p>
+            </div>
+            <!-- Language Selector Dropdown matching Flutter AppLocalizations -->
+            <select onchange="setAppLanguage(this.value)" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 text-[10px] font-bold text-cyan-300 rounded-xl px-2 py-1 focus:outline-none focus:border-cyan-400 shadow cursor-pointer">
+              <option value="en" ${currentAppLanguage === 'en' ? 'selected' : ''}>🇬🇧 EN</option>
+              <option value="hi" ${currentAppLanguage === 'hi' ? 'selected' : ''}>🇮🇳 हिंदी</option>
+              <option value="mr" ${currentAppLanguage === 'mr' ? 'selected' : ''}>🇮🇳 मराठी</option>
+            </select>
           </div>
 
           <!-- ROLE 1: CITIZEN -->
@@ -911,21 +1100,19 @@
               <div class="flex items-center gap-2">
                 <span class="text-2xl p-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40">👤</span>
                 <div>
-                  <h4 class="text-xs font-black text-white">Citizen / Public Safety</h4>
-                  <span class="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">Public Access</span>
+                  <h4 class="text-xs font-black text-white">${t.roleCitizenTitle}</h4>
+                  <span class="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">${t.roleCitizenBadge}</span>
                 </div>
               </div>
               <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
             </div>
-            <p class="text-[10px] text-slate-300 leading-relaxed">
-              Report dangerous sparking poles with phone camera & live GPS, check safe zones, and trigger emergency SOS.
-            </p>
+            <p class="text-[10px] text-slate-300 leading-relaxed">${t.roleCitizenTagline}</p>
             <div class="grid grid-cols-2 gap-2 pt-1">
               <button onclick="selectRoleToAuth('CITIZEN', 'signin')" class="py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] shadow transition-all flex items-center justify-center gap-1">
-                <span>🔑</span> Login
+                <span>🔑</span> ${t.loginBtn}
               </button>
               <button onclick="selectRoleToAuth('CITIZEN', 'signup')" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 font-extrabold text-[11px] transition-all flex items-center justify-center gap-1">
-                <span>📝</span> Register
+                <span>📝</span> ${t.registerBtn}
               </button>
             </div>
           </div>
@@ -936,21 +1123,19 @@
               <div class="flex items-center gap-2">
                 <span class="text-2xl p-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40">⚡</span>
                 <div>
-                  <h4 class="text-xs font-black text-white">Field Technician (Lineman)</h4>
-                  <span class="text-[9px] text-amber-400 font-bold uppercase tracking-wider">Field Operations</span>
+                  <h4 class="text-xs font-black text-white">${t.roleTechnicianTitle}</h4>
+                  <span class="text-[9px] text-amber-400 font-bold uppercase tracking-wider">${t.roleTechnicianBadge}</span>
                 </div>
               </div>
               <span class="w-2 h-2 rounded-full bg-amber-400"></span>
             </div>
-            <p class="text-[10px] text-slate-300 leading-relaxed">
-              Immediate real-time citizen alert dispatch, active work orders, diagnostic repair checklists, and proof upload.
-            </p>
+            <p class="text-[10px] text-slate-300 leading-relaxed">${t.roleTechnicianTagline}</p>
             <div class="grid grid-cols-2 gap-2 pt-1">
               <button onclick="selectRoleToAuth('TECHNICIAN', 'signin')" class="py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-[11px] shadow transition-all flex items-center justify-center gap-1">
-                <span>🔑</span> Login
+                <span>🔑</span> ${t.loginBtn}
               </button>
               <button onclick="selectRoleToAuth('TECHNICIAN', 'signup')" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 font-extrabold text-[11px] transition-all flex items-center justify-center gap-1">
-                <span>📝</span> Register
+                <span>📝</span> ${t.registerBtn}
               </button>
             </div>
           </div>
@@ -961,21 +1146,19 @@
               <div class="flex items-center gap-2">
                 <span class="text-2xl p-1.5 rounded-xl bg-cyan-500/20 border border-cyan-500/40">🛠️</span>
                 <div>
-                  <h4 class="text-xs font-black text-white">Electrical Engineer</h4>
-                  <span class="text-[9px] text-cyan-400 font-bold uppercase tracking-wider">Substation & Grid</span>
+                  <h4 class="text-xs font-black text-white">${t.roleEngineerTitle}</h4>
+                  <span class="text-[9px] text-cyan-400 font-bold uppercase tracking-wider">${t.roleEngineerBadge}</span>
                 </div>
               </div>
               <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
             </div>
-            <p class="text-[10px] text-slate-300 leading-relaxed">
-              Substation telemetry matrix (mA, Volts, tilt, rain), AI Random Forest anomaly classification, and risk heatmaps.
-            </p>
+            <p class="text-[10px] text-slate-300 leading-relaxed">${t.roleEngineerTagline}</p>
             <div class="grid grid-cols-2 gap-2 pt-1">
               <button onclick="selectRoleToAuth('ENGINEER', 'signin')" class="py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-extrabold text-[11px] shadow transition-all flex items-center justify-center gap-1">
-                <span>🔑</span> Login
+                <span>🔑</span> ${t.loginBtn}
               </button>
               <button onclick="selectRoleToAuth('ENGINEER', 'signup')" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 font-extrabold text-[11px] transition-all flex items-center justify-center gap-1">
-                <span>📝</span> Register
+                <span>📝</span> ${t.registerBtn}
               </button>
             </div>
           </div>
@@ -986,21 +1169,19 @@
               <div class="flex items-center gap-2">
                 <span class="text-2xl p-1.5 rounded-xl bg-purple-500/20 border border-purple-500/40">🏛️</span>
                 <div>
-                  <h4 class="text-xs font-black text-white">Municipal Authority</h4>
-                  <span class="text-[9px] text-purple-400 font-bold uppercase tracking-wider">Executive Governance</span>
+                  <h4 class="text-xs font-black text-white">${t.roleAuthorityTitle}</h4>
+                  <span class="text-[9px] text-purple-400 font-bold uppercase tracking-wider">${t.roleAuthorityBadge}</span>
                 </div>
               </div>
               <span class="w-2 h-2 rounded-full bg-purple-400"></span>
             </div>
-            <p class="text-[10px] text-slate-300 leading-relaxed">
-              City safety governance, emergency remote grid power cutoff, inter-agency disaster dispatch, and audit compliance.
-            </p>
+            <p class="text-[10px] text-slate-300 leading-relaxed">${t.roleAuthorityTagline}</p>
             <div class="grid grid-cols-2 gap-2 pt-1">
               <button onclick="selectRoleToAuth('AUTHORITY', 'signin')" class="py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-[11px] shadow transition-all flex items-center justify-center gap-1">
-                <span>🔑</span> Login
+                <span>🔑</span> ${t.loginBtn}
               </button>
               <button onclick="selectRoleToAuth('AUTHORITY', 'signup')" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30 font-extrabold text-[11px] transition-all flex items-center justify-center gap-1">
-                <span>📝</span> Register
+                <span>📝</span> ${t.registerBtn}
               </button>
             </div>
           </div>
@@ -1011,21 +1192,19 @@
               <div class="flex items-center gap-2">
                 <span class="text-2xl p-1.5 rounded-xl bg-rose-500/20 border border-rose-500/40">⚙️</span>
                 <div>
-                  <h4 class="text-xs font-black text-white">System Administrator</h4>
-                  <span class="text-[9px] text-rose-400 font-bold uppercase tracking-wider">Database & Simulator</span>
+                  <h4 class="text-xs font-black text-white">${t.roleAdminTitle}</h4>
+                  <span class="text-[9px] text-rose-400 font-bold uppercase tracking-wider">${t.roleAdminBadge}</span>
                 </div>
               </div>
               <span class="w-2 h-2 rounded-full bg-rose-400"></span>
             </div>
-            <p class="text-[10px] text-slate-300 leading-relaxed">
-              Live Database Explorer (show all database data), IoT fault simulation controls, and complete data export.
-            </p>
+            <p class="text-[10px] text-slate-300 leading-relaxed">${t.roleAdminTagline}</p>
             <div class="grid grid-cols-2 gap-2 pt-1">
               <button onclick="selectRoleToAuth('ADMIN', 'signin')" class="py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-[11px] shadow transition-all flex items-center justify-center gap-1">
-                <span>🔑</span> Login
+                <span>🔑</span> ${t.loginBtn}
               </button>
               <button onclick="selectRoleToAuth('ADMIN', 'signup')" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-300 border border-rose-500/30 font-extrabold text-[11px] transition-all flex items-center justify-center gap-1">
-                <span>📝</span> Register
+                <span>📝</span> ${t.registerBtn}
               </button>
             </div>
           </div>
@@ -1297,7 +1476,7 @@
       const container = document.getElementById('screen-content');
       const badge = document.getElementById('badge-connectivity');
 
-      const pole = telemetryData[activePole] || telemetryData['P-001'];
+      const pole = activePole ? telemetryData[activePole] : null;
       const userName = currentUser ? currentUser.name : 'Authorized User';
 
       if (badge) {
@@ -1316,9 +1495,9 @@
         avatar.innerText = userName.charAt(0).toUpperCase();
         avatar.className = 'w-6 h-6 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-[10px] shadow';
 
-        const isSafe = pole.risk_tier === 'NORMAL';
-        const badgeColor = isSafe ? 'emerald' : (pole.risk_tier === 'WARNING' ? 'amber' : 'rose');
-        const statusText = isSafe ? 'NORMAL — Safe Base' : (pole.risk_tier === 'WARNING' ? 'WARNING — Attention' : 'CRITICAL — Hazardous');
+        const isSafe = !pole || pole.risk_tier === 'NORMAL';
+        const badgeColor = !pole ? 'slate' : (pole.risk_tier === 'NORMAL' ? 'emerald' : (pole.risk_tier === 'WARNING' ? 'amber' : 'rose'));
+        const statusText = !pole ? 'STATUS: UNKNOWN / SAFE' : (pole.risk_tier === 'NORMAL' ? 'NORMAL — Safe Base' : (pole.risk_tier === 'WARNING' ? 'WARNING — Attention' : 'CRITICAL — Hazardous'));
 
         const latestResolvedReport = dbStore.hazardReports.find(r => r.status === 'Work Done' || r.status === 'RESOLVED') || (dbStore.hazardReports.length > 0 && dbStore.hazardReports[0].inspection_notes ? dbStore.hazardReports[0] : null);
 
@@ -1331,8 +1510,8 @@
             <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-${badgeColor}-500/20 border border-${badgeColor}-500/40 text-${badgeColor}-400 text-[11px] font-extrabold mb-1">
               <span>●</span> ${statusText}
             </div>
-            <h3 class="text-xs font-black text-white mt-1">Nearest Pole: ${activePole}</h3>
-            <p class="text-[10px] text-slate-300 mt-0.5 font-medium">Approx. 4.2m away • ${pole.name}</p>
+            <h3 class="text-xs font-black text-white mt-1">${activePole ? 'Nearest Pole: ' + activePole : (availablePoleIds.length === 0 ? 'No registered poles found' : 'No Pole Selected')}</h3>
+            <p class="text-[10px] text-slate-300 mt-0.5 font-medium">${pole ? (pole.distance_m ? 'Approx. ' + pole.distance_m + 'm away • ' : '') + pole.name : (availablePoleIds.length === 0 ? 'Please add or discover poles near your location.' : 'Select a pole or await GPS detection')}</p>
             <p class="text-[9px] text-emerald-400 mt-0.5 flex items-center justify-center gap-1">
               <span>📍</span> <span class="truncate max-w-[280px]">${currentLiveLocation.address || 'Real-time GPS Active'}</span>
             </p>
@@ -1340,11 +1519,11 @@
             <div class="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-slate-800/80 text-[10px]">
               <div class="bg-slate-950 p-2 rounded-xl">
                 <span class="text-slate-400">Body Leakage</span>
-                <p class="font-extrabold ${pole.leakage_ma >= 30 ? 'text-rose-400' : 'text-emerald-400'} text-xs">${pole.leakage_ma} mA</p>
+                <p class="font-extrabold ${pole && pole.leakage_ma >= 30 ? 'text-rose-400' : 'text-emerald-400'} text-xs">${pole ? pole.leakage_ma.toFixed(1) : '0.0'} mA</p>
               </div>
               <div class="bg-slate-950 p-2 rounded-xl">
                 <span class="text-slate-400">Touch Voltage</span>
-                <p class="font-extrabold ${pole.voltage_v >= 50 ? 'text-amber-400' : 'text-slate-300'} text-xs">${pole.voltage_v} V</p>
+                <p class="font-extrabold ${pole && pole.voltage_v >= 50 ? 'text-amber-400' : 'text-slate-300'} text-xs">${pole ? pole.voltage_v.toFixed(1) : '0.0'} V</p>
               </div>
             </div>
           </div>
@@ -1403,7 +1582,7 @@
                   <div class="text-slate-400 font-bold">Service Details and Lineman Remarks:</div>
                   <p class="text-slate-200 leading-relaxed">${latestResolvedReport.inspection_notes || 'Insulator crack replaced with 24kV polymer unit. Ground earth resistance continuity verified at 2.4 Ohms. Power safely re-energized.'}</p>
                   <div class="text-[9px] text-emerald-400 font-medium pt-1 flex justify-between border-t border-slate-800/80">
-                    <span>Assigned: Lineman #14 (Kailas Jadhav)</span>
+                    <span>Assigned: Lineman (Rapid Response Team)</span>
                     <span>Resolution Confirmed ✓</span>
                   </div>
                 </div>
@@ -1481,7 +1660,9 @@
 
           <!-- Pole Selector Chips -->
           <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px]">
-            ${['P-001', 'P-002', 'P-003', 'P-004', 'P-005'].map(pId => `
+            ${availablePoleIds.length === 0 ? `
+              <span class="text-xs text-slate-500 py-1">No registered poles found</span>
+            ` : availablePoleIds.map(pId => `
               <button onclick="selectPole('${pId}')" class="px-2.5 py-1 rounded-lg font-bold border transition-all ${activePole === pId ? 'bg-cyan-600 border-cyan-400 text-white' : 'bg-slate-900 border-slate-800 text-slate-400'}">
                 ${pId}
               </button>
@@ -1492,17 +1673,17 @@
           <div class="grid grid-cols-3 gap-2">
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2 text-center">
               <span class="text-[10px] text-slate-400">Leakage</span>
-              <p class="text-xs font-black ${pole.leakage_ma >= 30 ? 'text-rose-400' : 'text-emerald-400'}">${pole.leakage_ma.toFixed(1)} mA</p>
+              <p class="text-xs font-black ${pole && pole.leakage_ma >= 30 ? 'text-rose-400' : 'text-emerald-400'}">${pole ? pole.leakage_ma.toFixed(1) : '0.0'} mA</p>
               <span class="text-[8px] text-slate-500">Max: 30mA</span>
             </div>
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2 text-center">
               <span class="text-[10px] text-slate-400">Touch Volts</span>
-              <p class="text-xs font-black ${pole.voltage_v >= 50 ? 'text-amber-400' : 'text-slate-200'}">${pole.voltage_v.toFixed(1)} V</p>
+              <p class="text-xs font-black ${pole && pole.voltage_v >= 50 ? 'text-amber-400' : 'text-slate-200'}">${pole ? pole.voltage_v.toFixed(1) : '0.0'} V</p>
               <span class="text-[8px] text-slate-500">Safe: &lt;50V</span>
             </div>
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2 text-center">
               <span class="text-[10px] text-slate-400">Tilt Angle</span>
-              <p class="text-xs font-black ${pole.tilt_deg >= 15 ? 'text-rose-400' : 'text-slate-200'}">${pole.tilt_deg.toFixed(1)}°</p>
+              <p class="text-xs font-black ${pole && pole.tilt_deg >= 15 ? 'text-rose-400' : 'text-slate-200'}">${pole ? pole.tilt_deg.toFixed(1) : '0.0'}°</p>
               <span class="text-[8px] text-slate-500">Max: 15.0°</span>
             </div>
           </div>
@@ -1515,7 +1696,7 @@
                 ${workOrderStatus}
               </span>
             </div>
-            <p class="text-[11px] text-slate-300">Pole ${activePole}: ${pole.name}</p>
+            <p class="text-[11px] text-slate-300">${activePole ? `Pole ${activePole}: ${pole ? pole.name : ''}` : 'No pole currently selected'}</p>
             <div class="p-2 rounded bg-slate-950 border border-slate-800 text-[10px] text-slate-400">
               <span class="text-slate-500">Repair Log:</span> ${workOrderNotes}
             </div>
@@ -1567,7 +1748,9 @@
         container.innerHTML = `
           <!-- Pole Selector Chips -->
           <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px]">
-            ${['P-001', 'P-002', 'P-003', 'P-004', 'P-005'].map(pId => `
+            ${availablePoleIds.length === 0 ? `
+              <span class="text-xs text-slate-500 py-1">No registered poles found</span>
+            ` : availablePoleIds.map(pId => `
               <button onclick="selectPole('${pId}')" class="px-2.5 py-1 rounded-lg font-bold border transition-all ${activePole === pId ? 'bg-cyan-600 border-cyan-400 text-white' : 'bg-slate-900 border-slate-800 text-slate-400'}">
                 ${pId}
               </button>
@@ -1578,7 +1761,7 @@
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
             <div class="flex justify-between items-center mb-2">
               <span class="text-[11px] font-bold text-white flex items-center gap-1.5">
-                <span>📈</span> 24h Leakage Trend (${activePole})
+                <span>📈</span> 24h Leakage Trend (${activePole || 'No Pole Selected'})
               </span>
               <span class="text-[10px] text-rose-400 font-bold">--- 30mA Let-Go Limit</span>
             </div>
@@ -1639,7 +1822,7 @@
             </button>
           </div>
         `;
-        setTimeout(() => drawCanvasChart(pole.leakage_ma), 100);
+        setTimeout(() => drawCanvasChart(pole ? pole.leakage_ma : 0.0), 100);
       }
 
       // ----------------------------------------------------------------------
@@ -1653,25 +1836,15 @@
 
         // Select the active incident (either reported or in-progress)
         const activeReport = dbStore.hazardReports.find(r => r.status !== 'RESOLVED' && r.status !== 'Work Done')
-          || dbStore.hazardReports[0]
-          || {
-            id: 'REP-D4D408',
-            pole_id: 'P-001',
-            address: currentLiveLocation.address || 'Kudasan Feeder, Sector 4, Gandhinagar',
-            hazard_type: 'Damaged Wire / Sparking',
-            description: 'Sparks near cross-arm bracket, exposed copper wire swaying near pedestrian route.',
-            image_url: null,
-            status: 'REPORTED',
-            created_at: new Date().toLocaleString()
-          };
+          || (dbStore.hazardReports.length > 0 ? dbStore.hazardReports[0] : null);
 
         container.innerHTML = `
           <!-- Metro Safety Index & Rapid Response Fleet -->
           <div class="bg-gradient-to-r from-purple-900/40 via-purple-950/50 to-pink-900/40 border border-purple-500/30 rounded-3xl p-3.5 flex justify-between items-center shadow-xl">
             <div>
               <span class="text-[10px] text-purple-300 font-bold uppercase tracking-wider">Metropolitan Safety Index</span>
-              <h3 class="text-2xl font-black text-white">94.8 <span class="text-xs text-purple-300 font-normal">/ 100</span></h3>
-              <p class="text-[9px] text-emerald-400 font-medium mt-0.5">● 12 Rapid Response Crews Active</p>
+              <h3 class="text-2xl font-black text-white">99.2 <span class="text-xs text-purple-300 font-normal">/ 100</span></h3>
+              <p class="text-[9px] text-emerald-400 font-medium mt-0.5">● Rapid Response Fleet Standby</p>
             </div>
             <div class="w-11 h-11 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-xl shadow">
               🏛️
@@ -1692,13 +1865,13 @@
                 <span class="block text-slate-400">🔥 Fire</span>
                 <b class="text-emerald-400">Clear</b>
               </div>
-              <div class="p-1 rounded-lg bg-slate-950 border border-amber-500/30">
+              <div class="p-1 rounded-lg bg-slate-950 border border-slate-800">
                 <span class="block text-slate-400">👤 Human</span>
-                <b class="text-amber-400">Active</b>
+                <b class="text-slate-400">Clear</b>
               </div>
               <div class="p-1 rounded-lg bg-slate-950 border border-slate-800">
                 <span class="block text-slate-400">⚡ Sparks</span>
-                <b class="text-emerald-400">1.2%</b>
+                <b class="text-emerald-400">0.0%</b>
               </div>
               <div class="p-1 rounded-lg bg-slate-950 border border-slate-800">
                 <span class="block text-slate-400">〰️ Sag</span>
@@ -1715,129 +1888,139 @@
             </div>
           </div>
 
-          <!-- ACTIVE INCIDENT CARD (Matching Diagram Middle-Right Box) -->
-          <div class="bg-gradient-to-b from-slate-900 to-slate-900/90 border border-rose-500/40 rounded-3xl p-3.5 space-y-2.5 shadow-xl">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-full bg-rose-500/20 border border-rose-500/50 flex items-center justify-center text-rose-400 font-black text-xs">
-                  ⚠️
-                </div>
-                <div>
-                  <h4 class="text-xs font-black text-white">Active Incident: ${activeReport.id}</h4>
-                  <p class="text-[9px] text-slate-400">Live Dispatch & Citizen Escalation</p>
-                </div>
+          ${!activeReport ? `
+            <!-- Empty State when no active incidents -->
+            <div class="bg-gradient-to-b from-slate-900 to-slate-900/90 border border-slate-800 rounded-3xl p-6 text-center space-y-2 shadow-xl">
+              <div class="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-2xl mx-auto">
+                ✓
               </div>
-              <span class="px-2 py-0.5 rounded-full text-[9px] font-black ${activeReport.status === 'Work Done' || activeReport.status === 'RESOLVED' ? 'bg-emerald-500 text-slate-950' : (activeReport.status === 'IN_PROGRESS' ? 'bg-amber-500 text-slate-950' : 'bg-rose-500 text-white')}">
-                ${activeReport.status}
-              </span>
+              <h4 class="text-sm font-bold text-white">No Active Emergency Incidents</h4>
+              <p class="text-xs text-slate-400">All registered zones operating within safe parameters. Any citizen hazard reports or sensor alerts will appear here in real time.</p>
             </div>
-
-            <!-- Fault Image (Uploaded by user or live AI captured) -->
-            <div class="space-y-1">
-              <label class="text-[10px] font-bold text-slate-400">Fault Image (Uploaded by User / Camera Proof)</label>
-              ${activeReport.image_url ? `
-                <div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-950 relative">
-                  <img src="${activeReport.image_url}" alt="Citizen uploaded fault photo" class="w-full h-32 object-cover">
-                  <div class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-slate-950/80 text-[8px] text-cyan-300 font-mono">
-                    Live Upload Proof
+          ` : `
+            <!-- ACTIVE INCIDENT CARD (Matching Diagram Middle-Right Box) -->
+            <div class="bg-gradient-to-b from-slate-900 to-slate-900/90 border border-rose-500/40 rounded-3xl p-3.5 space-y-2.5 shadow-xl">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full bg-rose-500/20 border border-rose-500/50 flex items-center justify-center text-rose-400 font-black text-xs">
+                    ⚠️
+                  </div>
+                  <div>
+                    <h4 class="text-xs font-black text-white">Active Incident: ${activeReport.id}</h4>
+                    <p class="text-[9px] text-slate-400">Live Dispatch & Citizen Escalation</p>
                   </div>
                 </div>
-              ` : `
-                <div class="relative w-full h-28 rounded-xl bg-slate-950 border border-rose-500/30 flex flex-col items-center justify-center overflow-hidden p-2 text-center">
-                  <span class="text-2xl mb-0.5">⚡📸</span>
-                  <p class="text-[11px] font-extrabold text-rose-300">Hazard Proof Attached by Citizen</p>
-                  <p class="text-[9px] text-slate-400">Bounding Box: Insulator Flashover & Conductor Arc</p>
-                  <span class="mt-1 px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-[8px] text-rose-300 font-bold font-mono">
-                    AI DETECTION CONFIDENCE: 98.4%
-                  </span>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-black ${activeReport.status === 'Work Done' || activeReport.status === 'RESOLVED' ? 'bg-emerald-500 text-slate-950' : (activeReport.status === 'IN_PROGRESS' ? 'bg-amber-500 text-slate-950' : 'bg-rose-500 text-white')}">
+                  ${activeReport.status}
+                </span>
+              </div>
+
+              <!-- Fault Image (Uploaded by user or live AI captured) -->
+              <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400">Fault Image (Uploaded by User / Camera Proof)</label>
+                ${activeReport.image_url ? `
+                  <div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-950 relative">
+                    <img src="${activeReport.image_url}" alt="Citizen uploaded fault photo" class="w-full h-32 object-cover">
+                    <div class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-slate-950/80 text-[8px] text-cyan-300 font-mono">
+                      Live Upload Proof
+                    </div>
+                  </div>
+                ` : `
+                  <div class="relative w-full h-28 rounded-xl bg-slate-950 border border-rose-500/30 flex flex-col items-center justify-center overflow-hidden p-2 text-center">
+                    <span class="text-2xl mb-0.5">⚡📸</span>
+                    <p class="text-[11px] font-extrabold text-rose-300">Hazard Proof Attached</p>
+                    <p class="text-[9px] text-slate-400">${activeReport.description || 'Hazard reported by citizen'}</p>
+                    <span class="mt-1 px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-[8px] text-rose-300 font-bold font-mono">
+                      VERIFIED DISPATCH
+                    </span>
+                  </div>
+                `}
+              </div>
+
+              <!-- Location / Pole ID -->
+              <div class="bg-slate-950 border border-slate-800 rounded-xl p-2 text-[11px] space-y-0.5">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">Location / Pole ID:</span>
+                  <span class="text-cyan-400 font-mono font-bold">${activeReport.pole_id || 'POLE-CUSTOM'}</span>
                 </div>
-              `}
+                <p class="text-[10px] text-emerald-400 font-medium truncate">📍 ${activeReport.address || currentLiveLocation.address || 'Reported Location'}</p>
+              </div>
+
+              <!-- Type of Fault / Issue -->
+              <div class="bg-slate-950 border border-slate-800 rounded-xl p-2 text-[11px] space-y-0.5">
+                <span class="text-slate-400">Type of Fault / Issue:</span>
+                <p class="font-bold text-rose-400">${activeReport.hazard_type || 'Electrical Hazard'}</p>
+                <p class="text-[10px] text-slate-300 leading-snug mt-0.5">"${activeReport.description || 'Hazard reported near electrical equipment.'}"</p>
+              </div>
             </div>
 
-            <!-- Location / Pole ID -->
-            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2 text-[11px] space-y-0.5">
-              <div class="flex justify-between items-center">
-                <span class="text-slate-400">Location / Pole ID:</span>
-                <span class="text-cyan-400 font-mono font-bold">${activeReport.pole_id || 'P-001'}</span>
+            <!-- POLE SERVICE DETAILS (Matching Diagram Middle-Right Box) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-3.5 space-y-2 shadow-xl">
+              <div class="flex items-center gap-2 pb-1 border-b border-slate-800">
+                <span class="text-base">📋</span>
+                <h4 class="text-xs font-black text-white">Pole Service Details</h4>
               </div>
-              <p class="text-[10px] text-emerald-400 font-medium truncate">📍 ${activeReport.address || 'Kudasan Feeder, Sector 4'}</p>
-            </div>
-
-            <!-- Type of Fault / Issue -->
-            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2 text-[11px] space-y-0.5">
-              <span class="text-slate-400">Type of Fault / Issue:</span>
-              <p class="font-bold text-rose-400">${activeReport.hazard_type || 'Damaged Wire / Sparking'}</p>
-              <p class="text-[10px] text-slate-300 leading-snug mt-0.5">"${activeReport.description || 'Sparks near base of utility pole, exposed ground wire.'}"</p>
-            </div>
-          </div>
-
-          <!-- POLE SERVICE DETAILS (Matching Diagram Middle-Right Box) -->
-          <div class="bg-slate-900 border border-slate-800 rounded-3xl p-3.5 space-y-2 shadow-xl">
-            <div class="flex items-center gap-2 pb-1 border-b border-slate-800">
-              <span class="text-base">📋</span>
-              <h4 class="text-xs font-black text-white">Pole Service Details</h4>
-            </div>
-            <div class="grid grid-cols-2 gap-2 text-[10px]">
-              <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
-                <span class="text-slate-400 block font-semibold">Last Maintenance</span>
-                <b class="text-slate-200">14 Jan 2026</b>
-                <p class="text-[8px] text-slate-400 mt-0.5">Scheduled 6-mo Cycle</p>
-              </div>
-              <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
-                <span class="text-slate-400 block font-semibold">Service History</span>
-                <b class="text-cyan-400">3 Prior Audits</b>
-                <p class="text-[8px] text-slate-400 mt-0.5">Insulator replaced Oct 2025</p>
-              </div>
-              <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
-                <span class="text-slate-400 block font-semibold">Equipment</span>
-                <b class="text-slate-200">415V Step-Down</b>
-                <p class="text-[8px] text-slate-400 mt-0.5">Surge Arrester SA-40</p>
-              </div>
-              <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
-                <span class="text-slate-400 block font-semibold">Wiring Specs</span>
-                <b class="text-emerald-400">50mm² ACSR</b>
-                <p class="text-[8px] text-slate-400 mt-0.5">XLPE Earth Cont. OK</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- LINEMAN DETAILS (Matching Diagram Middle-Right Box) -->
-          <div class="bg-slate-900 border border-slate-800 rounded-3xl p-3.5 space-y-2 shadow-xl">
-            <div class="flex items-center gap-2 pb-1 border-b border-slate-800">
-              <span class="text-base">👷</span>
-              <h4 class="text-xs font-black text-white">Lineman Details</h4>
-            </div>
-            <div class="flex items-center justify-between text-[11px] bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
-              <div class="space-y-0.5">
-                <p class="font-bold text-white flex items-center gap-1.5">
-                  <span>Kailas Jadhav</span>
-                  <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">TK-402</span>
-                </p>
-                <p class="text-[10px] text-slate-400">Zone 2 • Sector 4 Urban Feeder Sub-division</p>
-                <p class="text-[9px] text-emerald-400 font-medium">● On Duty • 350m from incident site</p>
-              </div>
-              <a href="tel:+919823456789" class="px-3 py-1.5 rounded-xl bg-cyan-600/30 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/40 text-[10px] font-extrabold transition-all flex items-center gap-1">
-                <span>📞</span> Call
-              </a>
-            </div>
-          </div>
-
-          <!-- AUTHORITY ACTIONS CARD (Matching Diagram Purple Box) -->
-          <div class="bg-gradient-to-b from-purple-950/50 via-slate-900 to-slate-900 border-2 border-purple-500/40 rounded-3xl p-3.5 space-y-3 shadow-2xl">
-            <div class="flex items-center justify-between pb-1 border-b border-purple-500/30">
-              <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-full bg-purple-500/30 border border-purple-400 flex items-center justify-center text-xs">
-                  ⚡
+              <div class="grid grid-cols-2 gap-2 text-[10px]">
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
+                  <span class="text-slate-400 block font-semibold">Last Maintenance</span>
+                  <b class="text-slate-200">Periodic Cycle</b>
+                  <p class="text-[8px] text-slate-400 mt-0.5">Automated Inspection Active</p>
                 </div>
-                <h4 class="text-xs font-black text-purple-200">Authority Actions</h4>
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
+                  <span class="text-slate-400 block font-semibold">Service History</span>
+                  <b class="text-cyan-400">Registered Pole</b>
+                  <p class="text-[8px] text-slate-400 mt-0.5">Continuous IoT Telemetry</p>
+                </div>
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
+                  <span class="text-slate-400 block font-semibold">Equipment</span>
+                  <b class="text-slate-200">Distribution Line</b>
+                  <p class="text-[8px] text-slate-400 mt-0.5">Surge Arrester & Neutral</p>
+                </div>
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
+                  <span class="text-slate-400 block font-semibold">Wiring Specs</span>
+                  <b class="text-emerald-400">Standard Spec</b>
+                  <p class="text-[8px] text-slate-400 mt-0.5">Earth Continuity Grounded</p>
+                </div>
               </div>
-              <span class="text-[9px] text-purple-300 font-bold uppercase">Rapid Escalation</span>
             </div>
 
-            <!-- Action 1: Inspect and Fix Problem (Dispatch Lineman) -->
-            <button onclick="dispatchLinemanFromAuthority('${activeReport.id}')" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-lg shadow-blue-900/40 flex items-center justify-center gap-1.5 transition-all">
-              <span>🔧</span> Inspect and Fix Problem (Dispatch Lineman)
-            </button>
+            <!-- LINEMAN DETAILS (Matching Diagram Middle-Right Box) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-3.5 space-y-2 shadow-xl">
+              <div class="flex items-center gap-2 pb-1 border-b border-slate-800">
+                <span class="text-base">👷</span>
+                <h4 class="text-xs font-black text-white">Lineman Details</h4>
+              </div>
+              <div class="flex items-center justify-between text-[11px] bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                <div class="space-y-0.5">
+                  <p class="font-bold text-white flex items-center gap-1.5">
+                    <span>Field Rapid Response Crew</span>
+                    <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">DISPATCH-ON-DUTY</span>
+                  </p>
+                  <p class="text-[10px] text-slate-400">Urban Feeder Quick Response Sub-division</p>
+                  <p class="text-[9px] text-emerald-400 font-medium">● Active Fleet Dispatched to Incident Area</p>
+                </div>
+                <button onclick="alert('Connecting to Rapid Response Dispatch Desk (1912)...')" class="px-3 py-1.5 rounded-xl bg-cyan-600/30 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/40 text-[10px] font-extrabold transition-all flex items-center gap-1">
+                  <span>📞</span> Call
+                </button>
+              </div>
+            </div>
+
+            <!-- AUTHORITY ACTIONS CARD (Matching Diagram Purple Box) -->
+            <div class="bg-gradient-to-b from-purple-950/50 via-slate-900 to-slate-900 border-2 border-purple-500/40 rounded-3xl p-3.5 space-y-3 shadow-2xl">
+              <div class="flex items-center justify-between pb-1 border-b border-purple-500/30">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full bg-purple-500/30 border border-purple-400 flex items-center justify-center text-xs">
+                    ⚡
+                  </div>
+                  <h4 class="text-xs font-black text-purple-200">Authority Actions</h4>
+                </div>
+                <span class="text-[9px] text-purple-300 font-bold uppercase">Rapid Escalation</span>
+              </div>
+
+              <!-- Action 1: Inspect and Fix Problem (Dispatch Lineman) -->
+              <button onclick="dispatchLinemanFromAuthority('${activeReport.id}')" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-lg shadow-blue-900/40 flex items-center justify-center gap-1.5 transition-all">
+                <span>🔧</span> Inspect and Fix Problem (Dispatch Lineman)
+              </button>
 
             <!-- Action 2: Upload Photo of Completed Work -->
             <div class="space-y-1.5">
@@ -2020,7 +2203,7 @@
       if (locInput && (!locInput.value || locInput.value === '')) {
         locInput.value = (currentLiveLocation.address && currentLiveLocation.address !== 'Detecting live address...')
           ? currentLiveLocation.address
-          : `Near ${telemetryData[activePole]?.name || 'Pole P-001'}`;
+          : (activePole ? `Near ${telemetryData[activePole]?.name || activePole}` : '');
       }
       document.getElementById('modal-report').classList.remove('hidden');
     }
@@ -2060,9 +2243,11 @@
     }
 
     async function submitCitizenReport() {
-      const selectPole = document.getElementById('report-pole-id')?.value?.trim() || 'P-001';
+      const selectPole = document.getElementById('report-pole-id')?.value?.trim() || '';
       const customPole = document.getElementById('custom-pole-id')?.value?.trim() || '';
-      const finalPoleId = (selectPole === 'CUSTOM' && customPole) ? customPole : (selectPole === 'CUSTOM' ? 'POLE-CUSTOM' : selectPole);
+      const finalPoleId = (selectPole === 'CUSTOM' && customPole)
+        ? customPole
+        : (selectPole && selectPole !== 'CUSTOM' ? selectPole : (customPole || activePole || 'POLE-CUSTOM'));
 
       const category = document.getElementById('report-category')?.value || 'Damaged Wire / Sparking';
       const desc = document.getElementById('report-desc')?.value?.trim() || '';
@@ -2294,8 +2479,8 @@
 
     // 1. Citizen Report Download
     function downloadCitizenReport() {
-      const ticketId = dbStore.hazardReports[0]?.id || 'REP-CIT-8921';
-      const pole = telemetryData[activePole] || telemetryData['P-001'];
+      const ticketId = dbStore.hazardReports[0]?.id || `REP-CIT-${Date.now().toString().slice(-4)}`;
+      const pole = activePole ? telemetryData[activePole] : null;
       const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -2320,9 +2505,9 @@
   <table>
     <tr><th>Incident Ticket ID</th><td><b>${ticketId}</b></td></tr>
     <tr><th>Reporting Citizen</th><td>${currentUser ? currentUser.name : 'Citizen'} (${currentUser ? currentUser.email : 'Public'})</td></tr>
-    <tr><th>Nearest Pole Identifier</th><td><b>${activePole}</b> (${pole.name})</td></tr>
+    <tr><th>Nearest Pole Identifier</th><td><b>${activePole || 'POLE-CUSTOM'}</b> ${pole ? '(' + pole.name + ')' : ''}</td></tr>
     <tr><th>Physical Location / Address</th><td><b>${currentLiveLocation.address || 'Real-time GPS Area Active'}</b></td></tr>
-    <tr><th>GPS Geolocation</th><td>${currentReportCoords.lat}° N, ${currentReportCoords.lng}° E (±${currentReportCoords.accuracy}m)</td></tr>
+    <tr><th>GPS Geolocation</th><td>${currentReportCoords.lat != null ? currentReportCoords.lat + '° N, ' + currentReportCoords.lng + '° E' : 'GPS Active / Real-time'}</td></tr>
     <tr><th>Hazard Category</th><td>Sparking / Insulator Flashover</td></tr>
     <tr><th>Submission Date & Time</th><td>${new Date().toLocaleString()}</td></tr>
     <tr><th>Status</th><td><span style="color: #0284c7; font-weight: bold;">DISPATCHED TO FIELD TECHNICIAN</span></td></tr>
@@ -2341,7 +2526,7 @@
 
     // 2. Technician Report Download
     function downloadTechnicianReport() {
-      const wo = dbStore.workOrders[0] || { id: 'WO-8410', pole_id: 'P-001' };
+      const wo = dbStore.workOrders[0] || { id: 'WO-FIELD-01', pole_id: activePole || 'POLE-FIELD' };
       const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -2360,7 +2545,7 @@
     <p>Lineman Work Order: <b>${wo.id}</b> | Pole: <b>${wo.pole_id}</b></p>
   </div>
   <table>
-    <tr><th>Technician Name</th><td>${currentUser ? currentUser.name : 'Kailas Jadhav'} (Tech ID: TK-402)</td></tr>
+    <tr><th>Technician Name</th><td>${currentUser ? currentUser.name : 'Field Technician'}</td></tr>
     <tr><th>Timestamp</th><td>${new Date().toLocaleString()}</td></tr>
     <tr><th>Pre-Repair Leakage</th><td>28.4 mA (Exceeds IEC 30mA threshold)</td></tr>
     <tr><th>Corrective Action Taken</th><td>Insulator replaced. Earth pit continuity verified at 2.8 Ohms.</td></tr>
@@ -2387,15 +2572,15 @@
 </head>
 <body>
   <h2>🛠️ SUBSTATION ELECTRICAL HEALTH & IEC 60479-1 AUDIT REPORT</h2>
-  <p>Generated: ${new Date().toLocaleString()} | Station: Shivajinagar Feeder 4</p>
+  <p>Generated: ${new Date().toLocaleString()} | Division: ${currentLiveLocation.address || 'Field Division Network'}</p>
   <table>
     <tr><th>Pole ID</th><th>Location Name</th><th>Leakage (mA)</th><th>Touch Volts (V)</th><th>Tilt (°)</th><th>Rain</th><th>Risk Tier</th><th>Status</th></tr>
-    ${Object.keys(telemetryData).map(pId => {
+    ${Object.keys(telemetryData).length === 0 ? '<tr><td colspan="8">No registered poles currently in network</td></tr>' : Object.keys(telemetryData).map(pId => {
       const p = telemetryData[pId];
       return `<tr><td>${pId}</td><td>${p.name}</td><td>${p.leakage_ma}</td><td>${p.voltage_v}</td><td>${p.tilt_deg}</td><td>${p.rain ? 'YES' : 'NO'}</td><td>${p.risk_tier}</td><td>${p.status}</td></tr>`;
     }).join('')}
   </table>
-  <p>Random Forest Classification: 100% Accuracy across 5 test vectors.</p>
+  <p>Random Forest Classification: 100% Accuracy across test vectors.</p>
 </body>
 </html>`;
       downloadTextDocument(`PoleGuard_Engineer_Substation_Audit_${Date.now()}.html`, html);
@@ -2660,12 +2845,12 @@
         await fetch(`${API_BASE_URL}/hazard-reports/${reportId}/status`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'IN_PROGRESS', notes: 'Lineman Kailas Jadhav (TK-402) dispatched to site for physical inspection.' })
+          body: JSON.stringify({ status: 'IN_PROGRESS', notes: 'Rapid response field crew dispatched to site for physical inspection.' })
         });
       } catch (e) {
         console.warn('Backend patch notice:', e);
       }
-      alert(`🔧 LINEMAN DISPATCHED!\n\nRapid response order issued for ticket ${reportId}.\nLead Technician: Kailas Jadhav (TK-402)\nStatus updated to: IN_PROGRESS`);
+      alert(`🔧 LINEMAN DISPATCHED!\n\nRapid response order issued for ticket ${reportId}.\nLead Technician: Rapid Response Team\nStatus updated to: IN_PROGRESS`);
       renderCurrentView();
     }
 
@@ -2811,35 +2996,57 @@
     }
 
     function triggerCitizenSOS() {
-      alert(`🚨 CITIZEN SOS TRIGGERED!\nEmergency ticket created for nearest pole ${activePole} at GPS (${currentReportCoords.lat}, ${currentReportCoords.lng}). Police & DISCOM notified.`);
+      const poleText = activePole ? `for nearest pole ${activePole}` : 'for current location';
+      const coordsText = (currentReportCoords.lat != null && currentReportCoords.lng != null)
+        ? `at GPS (${currentReportCoords.lat}, ${currentReportCoords.lng})`
+        : 'at detected area';
+      alert(`🚨 CITIZEN SOS TRIGGERED!\nEmergency ticket created ${poleText} ${coordsText}. Police & DISCOM notified.`);
     }
 
     function injectFaultScenario(scen) {
+      const targetId = activePole || availablePoleIds[0] || 'POLE-TEST-01';
+      if (!telemetryData[targetId]) {
+        telemetryData[targetId] = {
+          id: targetId,
+          name: `Monitored Pole (${targetId})`,
+          latitude: currentReportCoords.lat || 0.0,
+          longitude: currentReportCoords.lng || 0.0,
+          distance_m: 5.0,
+          leakage_ma: 0.0,
+          voltage_v: 0.0,
+          tilt_deg: 0.0,
+          vibration_g: 0.0,
+          rain: false,
+          risk_tier: 'NORMAL',
+          status: 'ONLINE'
+        };
+        if (!availablePoleIds.includes(targetId)) {
+          availablePoleIds.push(targetId);
+        }
+      }
+      activePole = targetId;
+
       if (scen === 'NORMAL') {
-        telemetryData['P-001'].leakage_ma = 1.8;
-        telemetryData['P-001'].voltage_v = 1.2;
-        telemetryData['P-001'].tilt_deg = 0.3;
-        telemetryData['P-001'].rain = false;
-        telemetryData['P-001'].risk_tier = 'NORMAL';
-        activePole = 'P-001';
+        telemetryData[targetId].leakage_ma = 1.8;
+        telemetryData[targetId].voltage_v = 1.2;
+        telemetryData[targetId].tilt_deg = 0.3;
+        telemetryData[targetId].rain = false;
+        telemetryData[targetId].risk_tier = 'NORMAL';
       } else if (scen === 'WARNING') {
-        telemetryData['P-002'].leakage_ma = 16.5;
-        telemetryData['P-002'].voltage_v = 18.0;
-        telemetryData['P-002'].risk_tier = 'WARNING';
-        activePole = 'P-002';
+        telemetryData[targetId].leakage_ma = 16.5;
+        telemetryData[targetId].voltage_v = 18.0;
+        telemetryData[targetId].risk_tier = 'WARNING';
       } else if (scen === 'CRITICAL_MONSOON') {
-        telemetryData['P-003'].leakage_ma = 35.5;
-        telemetryData['P-003'].voltage_v = 62.0;
-        telemetryData['P-003'].rain = true;
-        telemetryData['P-003'].risk_tier = 'CRITICAL';
-        activePole = 'P-003';
+        telemetryData[targetId].leakage_ma = 35.5;
+        telemetryData[targetId].voltage_v = 62.0;
+        telemetryData[targetId].rain = true;
+        telemetryData[targetId].risk_tier = 'CRITICAL';
       } else if (scen === 'EMERGENCY_DUAL') {
-        telemetryData['P-004'].leakage_ma = 48.0;
-        telemetryData['P-004'].voltage_v = 85.0;
-        telemetryData['P-004'].tilt_deg = 21.5;
-        telemetryData['P-004'].rain = true;
-        telemetryData['P-004'].risk_tier = 'EMERGENCY';
-        activePole = 'P-004';
+        telemetryData[targetId].leakage_ma = 48.0;
+        telemetryData[targetId].voltage_v = 85.0;
+        telemetryData[targetId].tilt_deg = 21.5;
+        telemetryData[targetId].rain = true;
+        telemetryData[targetId].risk_tier = 'EMERGENCY';
       }
       renderCurrentView();
     }

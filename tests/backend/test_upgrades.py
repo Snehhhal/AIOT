@@ -23,7 +23,19 @@ async def test_health_check():
 @pytest.mark.asyncio
 async def test_nearby_poles():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        res = await ac.get("/api/v1/poles/nearby?latitude=18.5204&longitude=73.8567&radius_km=10.0")
+        admin_token = await ac.post("/api/v1/auth/login", json={"email": "admin@safety.org", "password": "password123"})
+        headers = {"Authorization": f"Bearer {admin_token.json()['access_token']}"}
+        await ac.post("/api/v1/poles", json={
+            "id": "P-NEARBY-TEST",
+            "name": "Test Nearby Pole",
+            "latitude": 23.215,
+            "longitude": 72.636,
+            "zone": "Sector 4",
+            "status": "HEALTHY",
+            "health_score": 100,
+            "risk_score": 0
+        }, headers=headers)
+        res = await ac.get("/api/v1/poles/nearby?latitude=23.215&longitude=72.636&radius_km=10.0")
         assert res.status_code == 200
         data = res.json()
         assert data["success"] is True

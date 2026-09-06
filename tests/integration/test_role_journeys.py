@@ -22,6 +22,33 @@ from backend.app.core.seed import seed_initial_data
 async def setup_database():
     """Ensure database schema tables and seed default users exist."""
     await seed_initial_data()
+    from backend.app.core.database import AsyncSessionLocal
+    from backend.app.models.entities import Pole, SensorReading
+    from datetime import datetime, timezone
+    async with AsyncSessionLocal() as db:
+        p = await db.get(Pole, "P-001")
+        if not p:
+            db.add(Pole(
+                id="P-001",
+                serial_number="PL-TEST-001",
+                name="Test Feeder Asset",
+                latitude=23.0,
+                longitude=72.0,
+                status="HEALTHY",
+                health_score=90,
+                risk_score=10,
+                zone="Test Zone"
+            ))
+            db.add(SensorReading(
+                pole_id="P-001",
+                leakage_current=2.0,
+                voltage=230.0,
+                temperature=25.0,
+                humidity=50.0,
+                rain=False,
+                recorded_at=datetime.now(timezone.utc)
+            ))
+            await db.commit()
 
 
 async def get_auth_token(ac: AsyncClient, email: str, password: str = "password123") -> str:
@@ -223,9 +250,9 @@ async def test_engineer_user_journey():
         new_pole_id = f"P-ENG-{uuid.uuid4().hex[:6].upper()}"
         create_res = await ac.post("/api/v1/poles", json={
             "id": new_pole_id,
-            "name": "Kothrud Sub-Station Feeder 4",
-            "latitude": 18.5074,
-            "longitude": 73.8077,
+            "name": "Sub-Station Feeder Asset 4",
+            "latitude": 23.01,
+            "longitude": 72.58,
             "zone": "Sector 4",
             "status": "HEALTHY",
             "health_score": 100,

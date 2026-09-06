@@ -13,10 +13,10 @@ class TechnicianWorkScreen extends StatefulWidget {
 }
 
 class _TechnicianWorkScreenState extends State<TechnicianWorkScreen> {
-  String _selectedPoleId = 'P-001';
+  String? _selectedPoleId;
   final _notesController = TextEditingController();
-  final _insulationController = TextEditingController(text: '120');
-  final _earthingController = TextEditingController(text: '3.2');
+  final _insulationController = TextEditingController();
+  final _earthingController = TextEditingController();
   
   String? _uploadedImageUrl;
   bool _isUploadingPhoto = false;
@@ -42,6 +42,13 @@ class _TechnicianWorkScreenState extends State<TechnicianWorkScreen> {
   }
 
   Future<void> _submitWorkOrder() async {
+    if (_selectedPoleId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a target pole first.')),
+      );
+      return;
+    }
+
     if (_notesController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter repair or inspection notes.')),
@@ -53,7 +60,7 @@ class _TechnicianWorkScreenState extends State<TechnicianWorkScreen> {
 
     // Update pole telemetry back to normal safe steady state
     final poleProvider = Provider.of<PoleProvider>(context, listen: false);
-    await poleProvider.triggerScenario(_selectedPoleId, 'NORMAL');
+    await poleProvider.triggerScenario(_selectedPoleId!, 'NORMAL');
 
     setState(() => _isSubmitting = false);
     if (mounted) {
@@ -94,14 +101,18 @@ class _TechnicianWorkScreenState extends State<TechnicianWorkScreen> {
                 border: Border.all(color: AppTheme.borderDark),
               ),
               child: DropdownButton<String>(
-                value: _selectedPoleId,
+                value: poleProvider.poles.any((p) => p.id == _selectedPoleId) ? _selectedPoleId : null,
+                hint: Text(
+                  poleProvider.poles.isEmpty ? 'No poles available' : 'Select a pole',
+                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                ),
                 isExpanded: true,
                 underline: const SizedBox(),
                 dropdownColor: AppTheme.surfaceDark,
                 items: poleProvider.poles.map((p) {
                   return DropdownMenuItem(
                     value: p.id,
-                    child: Text(' —  ()'),
+                    child: Text('${p.id} — ${p.name} (${p.status})'),
                   );
                 }).toList(),
                 onChanged: (val) {

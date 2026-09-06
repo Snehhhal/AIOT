@@ -144,11 +144,11 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
 
     final nearestPole = _nearbyPoles.isNotEmpty
         ? _nearbyPoles.first
-        : (poleProvider.selectedPole ?? (poleProvider.poles.isNotEmpty ? poleProvider.poles.first : null));
+        : poleProvider.selectedPole;
 
     final riskTier = nearestPole?.riskTier ?? RiskTier.safe;
-    final isDanger = riskTier == RiskTier.emergency || riskTier == RiskTier.critical;
-    final statusColor = riskTier.color;
+    final isDanger = nearestPole != null && (riskTier == RiskTier.emergency || riskTier == RiskTier.critical);
+    final statusColor = nearestPole != null ? riskTier.color : AppTheme.safeColor;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -257,7 +257,10 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
                         child: Text(
                           locationService.hasPosition
                               ? '${loc.tr('live_gps')}: ${locationService.effectiveLatitude?.toStringAsFixed(4)}, ${locationService.effectiveLongitude?.toStringAsFixed(4)}'
-                              : loc.tr('location_permission_needed'),
+                              : (locationService.permissionState == LocationPermissionState.denied ||
+                                      locationService.permissionState == LocationPermissionState.permanentlyDenied
+                                  ? loc.tr('location_permission_needed')
+                                  : loc.tr('location_unavailable')),
                           style: TextStyle(
                             fontSize: 12,
                             color: locationService.hasPosition ? AppTheme.textPrimary : AppTheme.warningColor,
@@ -353,7 +356,21 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
                             letterSpacing: 0.5,
                           ),
                         ),
-                        StatusBadge(tier: riskTier),
+                        if (nearestPole != null)
+                          StatusBadge(tier: riskTier)
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppTheme.safeColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: AppTheme.safeColor.withValues(alpha: 0.3)),
+                            ),
+                            child: const Text(
+                              'UNKNOWN / SAFE',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.safeColor),
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 14),
@@ -361,16 +378,18 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
                       radius: 34,
                       backgroundColor: statusColor.withValues(alpha: 0.15),
                       child: Icon(
-                        riskTier.icon,
+                        nearestPole != null ? riskTier.icon : Icons.shield_outlined,
                         color: statusColor,
                         size: 40,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      isDanger
-                          ? loc.tr('danger_title')
-                          : (riskTier == RiskTier.warning ? loc.tr('warning_title') : loc.tr('safe_title')),
+                      nearestPole == null
+                          ? 'STATUS: UNKNOWN / SAFE'
+                          : (isDanger
+                              ? loc.tr('danger_title')
+                              : (riskTier == RiskTier.warning ? loc.tr('warning_title') : loc.tr('safe_title'))),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,
@@ -380,9 +399,16 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      isDanger
-                          ? loc.tr('danger_desc')
-                          : (riskTier == RiskTier.warning ? loc.tr('warning_desc') : loc.tr('safe_desc')),
+                      nearestPole == null
+                          ? (!locationService.hasPosition
+                              ? (locationService.permissionState == LocationPermissionState.denied ||
+                                      locationService.permissionState == LocationPermissionState.permanentlyDenied
+                                  ? loc.tr('location_permission_needed')
+                                  : loc.tr('location_unavailable'))
+                              : loc.tr('no_nearby_poles_found'))
+                          : (isDanger
+                              ? loc.tr('danger_desc')
+                              : (riskTier == RiskTier.warning ? loc.tr('warning_desc') : loc.tr('safe_desc'))),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 13,

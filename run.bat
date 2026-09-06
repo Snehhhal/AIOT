@@ -40,7 +40,8 @@ echo ======================================================================
 echo  [+] Mobile App:      Opened in your browser!
 echo  [+] Backend API:     http://localhost:8000/docs
 echo  [+] Health Check:    http://localhost:8000/health
-echo  [+] Automated Tests: Run 'pytest tests/' to verify all 60 test cases
+echo  [+] Automated Tests: Run 'pytest tests/' to verify all 68 test cases
+echo  [+] Native Flutter:   cd frontend-mobile && flutter run
 echo ======================================================================
 echo.
 pause

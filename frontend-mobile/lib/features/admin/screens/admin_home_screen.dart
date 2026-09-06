@@ -13,9 +13,8 @@ class AdminHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
     final poleProvider = Provider.of<PoleProvider>(context);
-    final targetPole = poleProvider.poles.isNotEmpty
-        ? poleProvider.poles.firstWhere((p) => p.id == 'P-001', orElse: () => poleProvider.poles.first)
-        : null;
+    final targetPole = poleProvider.selectedPole ??
+        (poleProvider.poles.isNotEmpty ? poleProvider.poles.first : null);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -89,9 +88,11 @@ class AdminHomeScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Instantly trigger simulated fault scenarios on Pole P-001. All roles (Citizen, Tech, Engineer, Authority) react in real time.',
-                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                Text(
+                  targetPole != null
+                      ? 'Instantly trigger simulated fault scenarios on Pole ${targetPole.id}. All roles (Citizen, Tech, Engineer, Authority) react in real time.'
+                      : 'Select or discover a registered pole to trigger simulated scenarios. All roles react in real time.',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
                 if (targetPole != null) ...[
                   const SizedBox(height: 10),
@@ -136,24 +137,44 @@ class AdminHomeScreen extends StatelessWidget {
                   runSpacing: 8,
                   children: [
                     _buildScenarioButton(context, '1. Normal Steady (Safe)', Colors.green, () {
-                      poleProvider.triggerScenario('P-001', 'NORMAL');
-                      _showDemoSnackBar(context, 'Simulated Normal Steady on P-001 (Safe, 1.5mA).');
+                      if (targetPole == null) {
+                        _showDemoSnackBar(context, 'No pole selected. Register or discover a pole first.');
+                        return;
+                      }
+                      poleProvider.triggerScenario(targetPole.id, 'NORMAL');
+                      _showDemoSnackBar(context, 'Simulated Normal Steady on ${targetPole.id} (Safe, 1.5mA).');
                     }),
                     _buildScenarioButton(context, '2. Leakage Spike (>30mA)', Colors.amber, () {
-                      poleProvider.triggerScenario('P-001', 'LEAKAGE');
-                      _showDemoSnackBar(context, 'Simulated Insulation Breakdown (36.5mA) on P-001.');
+                      if (targetPole == null) {
+                        _showDemoSnackBar(context, 'No pole selected. Register or discover a pole first.');
+                        return;
+                      }
+                      poleProvider.triggerScenario(targetPole.id, 'LEAKAGE');
+                      _showDemoSnackBar(context, 'Simulated Insulation Breakdown (36.5mA) on ${targetPole.id}.');
                     }),
                     _buildScenarioButton(context, '3. Leakage + Monsoon Rain', Colors.orange, () {
-                      poleProvider.triggerScenario('P-001', 'LEAKAGE_RAIN');
-                      _showDemoSnackBar(context, 'Simulated Leakage in Heavy Rain on P-001.');
+                      if (targetPole == null) {
+                        _showDemoSnackBar(context, 'No pole selected. Register or discover a pole first.');
+                        return;
+                      }
+                      poleProvider.triggerScenario(targetPole.id, 'LEAKAGE_RAIN');
+                      _showDemoSnackBar(context, 'Simulated Leakage in Heavy Rain on ${targetPole.id}.');
                     }),
                     _buildScenarioButton(context, '4. CV: Human Proximity', Colors.purple, () {
-                      poleProvider.triggerScenario('P-001', 'HUMAN_PROXIMITY');
-                      _showDemoSnackBar(context, 'YOLO detected human within 1.2m of wet energized pole.');
+                      if (targetPole == null) {
+                        _showDemoSnackBar(context, 'No pole selected. Register or discover a pole first.');
+                        return;
+                      }
+                      poleProvider.triggerScenario(targetPole.id, 'HUMAN_PROXIMITY');
+                      _showDemoSnackBar(context, 'YOLO detected human within 1.2m of wet energized pole ${targetPole.id}.');
                     }),
                     _buildScenarioButton(context, '5. FULL EMERGENCY', Colors.red, () {
-                      poleProvider.triggerScenario('P-001', 'FULL_EMERGENCY');
-                      _showDemoSnackBar(context, 'EMERGENCY: Leakage + Rain + Human + Waterlogged!');
+                      if (targetPole == null) {
+                        _showDemoSnackBar(context, 'No pole selected. Register or discover a pole first.');
+                        return;
+                      }
+                      poleProvider.triggerScenario(targetPole.id, 'FULL_EMERGENCY');
+                      _showDemoSnackBar(context, 'EMERGENCY: Leakage + Rain + Human + Waterlogged on ${targetPole.id}!');
                     }),
                     _buildScenarioButton(context, '🔄 Reset / Reload Fleet', Colors.blueGrey, () {
                       poleProvider.loadPoles();

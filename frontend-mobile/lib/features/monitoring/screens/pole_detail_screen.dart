@@ -44,10 +44,16 @@ class _PoleDetailScreenState extends State<PoleDetailScreen> {
   Widget build(BuildContext context) {
     final poleProvider = Provider.of<PoleProvider>(context);
     final auth = Provider.of<AuthService>(context);
-    final pole = poleProvider.poles.firstWhere(
-      (p) => p.id == widget.poleId,
-      orElse: () => poleProvider.selectedPole ?? _createFallback(widget.poleId),
-    );
+    PoleModel pole;
+    try {
+      pole = poleProvider.poles.firstWhere((p) => p.id == widget.poleId);
+    } catch (_) {
+      if (poleProvider.selectedPole != null && poleProvider.selectedPole!.id == widget.poleId) {
+        pole = poleProvider.selectedPole!;
+      } else {
+        pole = _createPlaceholderPole(widget.poleId);
+      }
+    }
 
     // Keep history in sync with provider cache if new points arrived
     final cached = poleProvider.historyCache[widget.poleId];
@@ -438,18 +444,23 @@ class _PoleDetailScreenState extends State<PoleDetailScreen> {
     }
   }
 
-  static PoleModel _createFallback(String id) {
+  static PoleModel _createPlaceholderPole(String id) {
     return PoleModel(
       id: id,
-      name: 'Electric Pole ',
-      location: 'Urban Distribution Node',
-      latitude: 18.5204,
-      longitude: 73.8567,
-      zone: 'Sector 4',
-      status: 'CRITICAL',
-      leakageCurrent: 48.5,
-      voltage: 74.2,
-      riskTier: RiskTier.emergency,
+      name: 'Pole $id',
+      location: 'Unregistered / Manual Tag',
+      latitude: 0.0,
+      longitude: 0.0,
+      zone: 'General Area',
+      status: 'UNKNOWN / SAFE',
+      leakageCurrent: 0.0,
+      voltage: 0.0,
+      temperature: 0.0,
+      humidity: 0.0,
+      rain: false,
+      healthScore: 100,
+      riskScore: 0,
+      riskTier: RiskTier.safe,
     );
   }
 }

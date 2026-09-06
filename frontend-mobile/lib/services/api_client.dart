@@ -183,7 +183,6 @@ class ApiClient {
     return getPoles();
   }
 
-
   /// Fetches all registered poles from GET /api/v1/poles
   static Future<List<PoleModel>> getPoles() async {
     try {
@@ -197,9 +196,9 @@ class ApiClient {
         return list.map((item) => PoleModel.fromJson(item as Map<String, dynamic>)).toList();
       }
     } catch (e) {
-      // Fallback to initial poles
+      // Fallback to empty list
     }
-    return _getFallbackPoles();
+    return const <PoleModel>[];
   }
 
   /// Fetches single pole details from GET /api/v1/poles/{pole_id}
@@ -214,7 +213,7 @@ class ApiClient {
         return PoleModel.fromJson(decoded['data'] as Map<String, dynamic>);
       }
     } catch (_) {}
-    return _getFallbackPoles().firstWhere((p) => p.id == poleId, orElse: () => _getFallbackPoles().first);
+    return null;
   }
 
   /// Fetches historical trend readings from GET /api/v1/poles/{pole_id}/history
@@ -232,7 +231,7 @@ class ApiClient {
         }
       }
     } catch (_) {}
-    return _generateFallbackHistory(poleId);
+    return const <SensorHistoryPoint>[];
   }
 
   // =========================================================================
@@ -594,103 +593,5 @@ class ApiClient {
     } catch (_) {}
     return 'For immediate electrical emergencies: Maintain at least 10 meters distance from the pole, prevent others from approaching, and notify the local utility control room immediately.';
   }
-
-  static List<PoleModel> _getFallbackPoles() {
-    return const [
-      PoleModel(
-        id: "P-001",
-        serialNumber: "PL-2024-001",
-        name: "Distribution Feeder Pole #01",
-        location: "Primary Municipal Grid",
-        address: "Feeder Line Distribution Base, Sector 4",
-        area: "Sector 4 Grid",
-        latitude: 18.5204,
-        longitude: 73.8567,
-        zone: "Sector 4",
-        status: "CRITICAL",
-        leakageCurrent: 48.2,
-        voltage: 72.0,
-        temperature: 31.0,
-        humidity: 95.0,
-        rain: true,
-        healthScore: 42,
-        riskScore: 88,
-        riskTier: RiskTier.emergency,
-      ),
-      PoleModel(
-        id: "P-002",
-        serialNumber: "PL-2024-002",
-        name: "Crossing Feeder Pillar #02",
-        location: "Street Junction Grid",
-        address: "Crossing Feeder Line, Sector 1",
-        area: "Sector 1 Grid",
-        latitude: 18.5280,
-        longitude: 73.8420,
-        zone: "Sector 1",
-        status: "WARNING",
-        leakageCurrent: 14.2,
-        voltage: 228.0,
-        temperature: 28.5,
-        humidity: 65.0,
-        rain: false,
-        healthScore: 68,
-        riskScore: 45,
-        riskTier: RiskTier.warning,
-      ),
-      PoleModel(
-        id: "P-003",
-        serialNumber: "PL-2024-003",
-        name: "Substation Feeder Pole #03",
-        location: "Substation Perimeter",
-        address: "Step-Down Transformer Line, Sector 2",
-        area: "Sector 2 Grid",
-        latitude: 18.5312,
-        longitude: 73.8745,
-        zone: "Sector 2",
-        status: "HEALTHY",
-        leakageCurrent: 1.8,
-        voltage: 231.0,
-        temperature: 27.5,
-        humidity: 50.0,
-        rain: false,
-        healthScore: 94,
-        riskScore: 8,
-        riskTier: RiskTier.safe,
-      ),
-      PoleModel(
-        id: "P-004",
-        serialNumber: "PL-2024-004",
-        name: "Commercial Feeder Pole #04",
-        location: "Commercial Complex Ring",
-        address: "High-Load Feeder Pillar, Sector 3",
-        area: "Sector 3 Grid",
-        latitude: 18.5074,
-        longitude: 73.8077,
-        zone: "Sector 3",
-        status: "HEALTHY",
-        leakageCurrent: 1.1,
-        voltage: 230.0,
-        temperature: 26.8,
-        humidity: 46.0,
-        rain: false,
-        healthScore: 96,
-        riskScore: 5,
-        riskTier: RiskTier.safe,
-      ),
-    ];
-  }
-
-  static List<SensorHistoryPoint> _generateFallbackHistory(String poleId) {
-    final now = DateTime.now();
-    return List.generate(12, (index) {
-      final time = now.subtract(Duration(hours: 11 - index));
-      return SensorHistoryPoint(
-        timestamp: time,
-        leakageCurrent: 1.5 + (index * 0.4),
-        voltage: 230.0 - (index * 0.2),
-        temperature: 27.0 + (index % 3),
-        humidity: 50.0 + (index % 5),
-      );
-    });
-  }
 }
+

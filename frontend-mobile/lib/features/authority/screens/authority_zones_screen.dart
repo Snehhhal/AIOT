@@ -11,21 +11,47 @@ class AuthorityZonesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final poleProvider = Provider.of<PoleProvider>(context);
-    final zones = ['Sector 1 (Shivajinagar)', 'Sector 2 (Railway Circle)', 'Sector 3 (Kothrud)', 'Sector 4 (Pune Cantonment)'];
+    final zones = poleProvider.poles
+        .map((p) => p.zone)
+        .where((z) => z.isNotEmpty)
+        .toSet()
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Metropolitan Risk Zones', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: zones.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
-          final zone = zones[index];
-          final sectorKey = 'Sector ${index + 1}';
-          final zonePoles = poleProvider.poles.where((p) => p.zone == sectorKey).toList();
-          final hasEmergency = zonePoles.any((p) => p.riskTier == RiskTier.emergency || p.riskTier == RiskTier.critical);
+      body: zones.isEmpty
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.location_off_rounded, size: 48, color: AppTheme.textSecondary),
+                    SizedBox(height: 12),
+                    Text(
+                      'No Municipal Zones Registered',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'No registered poles found in the database. Discovered or registered poles will appear here grouped by municipal zone.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: zones.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 16),
+              itemBuilder: (context, index) {
+                final zone = zones[index];
+                final zonePoles = poleProvider.poles.where((p) => p.zone == zone).toList();
+                final hasEmergency = zonePoles.any((p) => p.riskTier == RiskTier.emergency || p.riskTier == RiskTier.critical);
 
           return Card(
             color: AppTheme.surfaceDark,
