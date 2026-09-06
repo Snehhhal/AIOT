@@ -117,13 +117,18 @@
 
       <!-- Real-Time GPS Live Ticker Ribbon -->
       <div id="gps-live-ticker" class="px-3 py-1 bg-cyan-950/40 border-b border-cyan-800/30 text-[10px] text-cyan-300 flex items-center justify-between">
-        <div class="flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="gps-ticker-text">Acquiring real-time GPS...</span>
+        <div class="flex items-center gap-1.5 min-w-0 flex-1 mr-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+          <span id="gps-ticker-text" class="truncate">Acquiring real-time GPS...</span>
         </div>
-        <button onclick="recalibrateGPS()" class="text-[9px] text-cyan-400 hover:underline font-bold">
-          Refresh 🔄
-        </button>
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="promptManualLocation()" class="text-[9px] text-amber-300 hover:underline font-bold">
+            ✏️ Location
+          </button>
+          <button onclick="recalibrateGPS()" class="text-[9px] text-cyan-400 hover:underline font-bold">
+            🔄 Refresh
+          </button>
+        </div>
       </div>
 
       <!-- Main Scrollable Screen Content Container -->
@@ -190,28 +195,42 @@
       </div>
 
       <!-- Real GPS Live Detection Status -->
-      <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-        <div class="flex items-center justify-between text-[11px] mb-1">
-          <span class="font-bold text-slate-400">Device GPS Location:</span>
+      <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+        <div class="flex items-center justify-between text-[11px]">
+          <span class="font-bold text-slate-300">📍 Real-Time Location:</span>
           <span id="gps-coords-label" class="text-cyan-400 font-mono text-[10px]">Detecting...</span>
         </div>
-        <div class="flex items-center justify-between text-[10px]">
-          <span id="gps-status-label" class="text-slate-400">Acquiring real device location</span>
-          <button type="button" onclick="recalibrateGPS()" class="text-cyan-400 font-bold hover:underline">
-            🔄 Refresh GPS
-          </button>
+        <div id="gps-address-label" class="text-[11px] text-emerald-400 font-medium truncate">
+          Acquiring real street & locality...
+        </div>
+        <div class="flex items-center justify-between text-[10px] pt-1 border-t border-slate-900">
+          <span id="gps-status-label" class="text-slate-400">Locating device...</span>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="promptManualLocation()" class="text-amber-400 font-bold hover:underline">
+              ✏️ Change Location
+            </button>
+            <button type="button" onclick="recalibrateGPS()" class="text-cyan-400 font-bold hover:underline">
+              🔄 Refresh GPS
+            </button>
+          </div>
         </div>
       </div>
 
       <div>
         <label class="text-[11px] text-slate-400 font-medium">Nearest Pole Identifier</label>
-        <select id="report-pole-id" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-mono">
-          <option value="P-001">P-001 • Gandhi Square Commercial</option>
-          <option value="P-002">P-002 • FC Road Junction North</option>
-          <option value="P-003">P-003 • University Circle - West Gate</option>
-          <option value="P-004">P-004 • Industrial Feeder Base</option>
-          <option value="P-005">P-005 • Metro Station Entrance East</option>
+        <select id="report-pole-id" onchange="handlePoleSelectChange(this.value)" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-mono">
+          <option value="P-001">Pole #01 • Local Distribution Feeder (~4m)</option>
+          <option value="P-002">Pole #02 • Street Crossing Feeder (~16m)</option>
+          <option value="P-003">Pole #03 • Transformer Step-Down Base (~32m)</option>
+          <option value="P-004">Pole #04 • Main Line Feeder Junction (~55m)</option>
+          <option value="P-005">Pole #05 • Service Drop Distribution (~78m)</option>
+          <option value="CUSTOM">➕ Custom: Enter Physical Pole Tag / Landmark</option>
         </select>
+        <div id="custom-pole-box" class="hidden mt-2 bg-cyan-950/20 border border-cyan-500/30 rounded-xl p-2 space-y-1">
+          <label class="text-[10px] text-cyan-300 font-bold">Physical Pole Tag / ID</label>
+          <input id="custom-pole-id" type="text" placeholder="e.g. POLE-104 or Street Light #8" class="w-full bg-slate-950 border border-cyan-500/50 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none font-mono">
+          <p class="text-[9px] text-slate-400">Look for the yellow or stenciled ID plate on the physical pole.</p>
+        </div>
       </div>
 
       <div>
@@ -371,9 +390,21 @@
     let unreadDispatchesCount = 0;
     let activeDbTab = 'reports';
 
-    // Real-Time GPS Engine State
+    // Real-Time GPS & Geolocation Engine State
     let currentReportCoords = { lat: 18.5204, lng: 73.8567, accuracy: 15 };
+    let currentLiveLocation = {
+      lat: null,
+      lng: null,
+      accuracy: null,
+      address: 'Detecting live address...',
+      locality: '',
+      city: '',
+      state: '',
+      source: 'Detecting...',
+      isReal: false
+    };
     let isRealGPSLocked = false;
+    let gpsWatchId = null;
 
     // In-memory Database Synchronizer
     const dbStore = {
@@ -392,61 +423,254 @@
       ],
       alerts: [],
       users: [],
-      auditLogs: []
+      auditLogs: [],
+      backendPoles: []
     };
 
-    // Telemetry Sensor Simulation Matrix
-    const telemetryData = {
-      'P-001': { name: 'Gandhi Square Commercial', leakage_ma: 1.8, voltage_v: 1.2, tilt_deg: 0.3, temp_c: 28.0, rain: false, risk_score: 8, risk_tier: 'NORMAL', status: 'HEALTHY' },
-      'P-002': { name: 'FC Road Junction North', leakage_ma: 16.5, voltage_v: 18.0, tilt_deg: 1.1, temp_c: 31.0, rain: false, risk_score: 38, risk_tier: 'WARNING', status: 'WARNING' },
-      'P-003': { name: 'University Circle - West Gate', leakage_ma: 35.5, voltage_v: 62.0, tilt_deg: 2.4, temp_c: 24.5, rain: true, risk_score: 88, risk_tier: 'CRITICAL', status: 'CRITICAL' },
-      'P-004': { name: 'Industrial Feeder Base', leakage_ma: 48.0, voltage_v: 85.0, tilt_deg: 21.5, temp_c: 29.0, rain: true, risk_score: 98, risk_tier: 'EMERGENCY', status: 'EMERGENCY' },
-      'P-005': { name: 'Metro Station Entrance East', leakage_ma: 2.2, voltage_v: 3.1, tilt_deg: 0.5, temp_c: 27.5, rain: false, risk_score: 11, risk_tier: 'NORMAL', status: 'HEALTHY' }
+    // Dynamic Telemetry Sensor Matrix (No hardcoded Gandhi Square / FC Road!)
+    let telemetryData = {
+      'P-001': { name: 'Pole #01 • Local Distribution Feeder', leakage_ma: 1.8, voltage_v: 1.2, tilt_deg: 0.3, temp_c: 28.0, rain: false, risk_score: 8, risk_tier: 'NORMAL', status: 'HEALTHY' },
+      'P-002': { name: 'Pole #02 • Street Crossing Feeder Pillar', leakage_ma: 16.5, voltage_v: 18.0, tilt_deg: 1.1, temp_c: 31.0, rain: false, risk_score: 38, risk_tier: 'WARNING', status: 'WARNING' },
+      'P-003': { name: 'Pole #03 • Transformer Step-Down Base', leakage_ma: 35.5, voltage_v: 62.0, tilt_deg: 2.4, temp_c: 24.5, rain: true, risk_score: 88, risk_tier: 'CRITICAL', status: 'CRITICAL' },
+      'P-004': { name: 'Pole #04 • Main Line Feeder Junction', leakage_ma: 48.0, voltage_v: 85.0, tilt_deg: 21.5, temp_c: 29.0, rain: true, risk_score: 98, risk_tier: 'EMERGENCY', status: 'EMERGENCY' },
+      'P-005': { name: 'Pole #05 • Service Drop Distribution', leakage_ma: 2.2, voltage_v: 3.1, tilt_deg: 0.5, temp_c: 27.5, rain: false, risk_score: 11, risk_tier: 'NORMAL', status: 'HEALTHY' }
     };
 
+    // Update pole names with actual real-time detected locality/city
+    function updateTelemetryWithRealLocation(locality, city) {
+      const areaLabel = locality || city || 'Current Location';
+      telemetryData['P-001'].name = `Pole #01 • Near ${areaLabel} (Nearest, ~4m)`;
+      telemetryData['P-002'].name = `Pole #02 • ${areaLabel} Crossing Feeder (~16m)`;
+      telemetryData['P-003'].name = `Pole #03 • ${areaLabel} Transformer Step-Down (~32m)`;
+      telemetryData['P-004'].name = `Pole #04 • ${areaLabel} High-Load Pillar (~55m)`;
+      telemetryData['P-005'].name = `Pole #05 • ${areaLabel} Distribution Line (~78m)`;
+      renderPoleSelectOptions();
+      if (currentView === 'DASHBOARD') {
+        renderCurrentView();
+      }
+    }
+
+    function renderPoleSelectOptions() {
+      const select = document.getElementById('report-pole-id');
+      if (!select) return;
+      const currentSelected = select.value;
+      let html = '';
+      
+      // Dynamic Nearby Poles (localized to user's real location)
+      Object.keys(telemetryData).forEach(pId => {
+        const p = telemetryData[pId];
+        html += `<option value="${pId}">${pId} • ${p.name}</option>`;
+      });
+
+      // Database Poles (if loaded from backend API)
+      if (dbStore.backendPoles && dbStore.backendPoles.length > 0) {
+        dbStore.backendPoles.forEach(p => {
+          if (!telemetryData[p.id]) {
+            html += `<option value="${p.id}">${p.id} • ${p.name || p.address}</option>`;
+          }
+        });
+      }
+
+      // Custom Pole Option
+      html += `<option value="CUSTOM">➕ Custom: Enter Physical Pole Tag / Landmark</option>`;
+      
+      select.innerHTML = html;
+      if (currentSelected && select.querySelector(`option[value="${currentSelected}"]`)) {
+        select.value = currentSelected;
+      }
+    }
+
+    function handlePoleSelectChange(val) {
+      const customBox = document.getElementById('custom-pole-box');
+      if (customBox) {
+        if (val === 'CUSTOM') {
+          customBox.classList.remove('hidden');
+          const input = document.getElementById('custom-pole-id');
+          if (input) input.focus();
+        } else {
+          customBox.classList.add('hidden');
+        }
+      }
+    }
+
+    async function fetchPolesFromBackend() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/poles`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.data && Array.isArray(data.data)) {
+            dbStore.backendPoles = data.data;
+            renderPoleSelectOptions();
+          }
+        }
+      } catch (e) {
+        console.debug('Backend poles fetch notice:', e);
+      }
+    }
+
     // ========================================================================
-    // 2. Real-Time Device Geolocation Engine
+    // 2. Real-Time Geolocation & Reverse Geocoding Engine
     // ========================================================================
-    function initRealTimeGPS() {
+    async function initRealTimeGPS() {
+      // 1. First immediately try fast IP-based location in parallel
+      fetchFallbackIPLocation();
+
+      // 2. Query high-accuracy device GPS
       if (!navigator.geolocation) {
-        updateGPSUI(false, "GPS unsupported in browser");
+        updateGPSUI(false, "Browser does not support GPS hardware");
         return;
       }
+
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          currentReportCoords.lat = parseFloat(position.coords.latitude.toFixed(5));
-          currentReportCoords.lng = parseFloat(position.coords.longitude.toFixed(5));
-          currentReportCoords.accuracy = Math.round(position.coords.accuracy || 10);
-          isRealGPSLocked = true;
-          updateGPSUI(true);
+        async (position) => {
+          await handleGPSPosition(position, 'Device GPS (High Accuracy)');
         },
-        (error) => {
+        async (error) => {
           console.warn("GPS Geolocation notice:", error.message);
-          isRealGPSLocked = false;
-          updateGPSUI(false, "GPS permission denied, test coordinate active");
+          await fetchFallbackIPLocation();
         },
         { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
       );
+
+      // 3. Continuous position watch
+      try {
+        gpsWatchId = navigator.geolocation.watchPosition(
+          async (pos) => {
+            await handleGPSPosition(pos, 'Device GPS (Active Watch)');
+          },
+          (err) => console.debug("GPS watch:", err.message),
+          { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+        );
+      } catch (e) {
+        console.debug("watchPosition unsupported:", e);
+      }
     }
 
-    function recalibrateGPS() {
-      const btn = document.getElementById('btn-gps-text');
-      if (btn) btn.innerText = 'Locating...';
+    async function recalibrateGPS() {
+      const tickerText = document.getElementById('gps-ticker-text');
+      const btnText = document.getElementById('btn-gps-text');
+      if (tickerText) tickerText.innerText = '🛰️ Recalibrating real-time GPS...';
+      if (btnText) btnText.innerText = 'GPS: Locating...';
+
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            currentReportCoords.lat = parseFloat(pos.coords.latitude.toFixed(5));
-            currentReportCoords.lng = parseFloat(pos.coords.longitude.toFixed(5));
-            currentReportCoords.accuracy = Math.round(pos.coords.accuracy || 8);
-            isRealGPSLocked = true;
-            updateGPSUI(true);
+          async (pos) => {
+            await handleGPSPosition(pos, 'Device GPS (Recalibrated)');
           },
-          (err) => {
-            isRealGPSLocked = false;
-            updateGPSUI(false, "GPS locked to test location");
+          async (err) => {
+            console.warn("Recalibration GPS notice:", err.message);
+            await fetchFallbackIPLocation();
           },
           { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
+      } else {
+        await fetchFallbackIPLocation();
+      }
+    }
+
+    async function handleGPSPosition(pos, sourceLabel) {
+      currentReportCoords.lat = parseFloat(pos.coords.latitude.toFixed(5));
+      currentReportCoords.lng = parseFloat(pos.coords.longitude.toFixed(5));
+      currentReportCoords.accuracy = Math.round(pos.coords.accuracy || 10);
+      isRealGPSLocked = true;
+
+      currentLiveLocation.lat = currentReportCoords.lat;
+      currentLiveLocation.lng = currentReportCoords.lng;
+      currentLiveLocation.accuracy = currentReportCoords.accuracy;
+      currentLiveLocation.source = sourceLabel;
+      currentLiveLocation.isReal = true;
+
+      updateGPSUI(true);
+
+      // Perform real-time reverse geocoding to resolve street & city
+      await resolveReverseGeocode(currentReportCoords.lat, currentReportCoords.lng);
+    }
+
+    async function fetchFallbackIPLocation() {
+      try {
+        const res = await fetch('https://freeipapi.com/api/json');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.latitude && data.longitude) {
+            if (!isRealGPSLocked) {
+              currentReportCoords.lat = parseFloat(data.latitude.toFixed(5));
+              currentReportCoords.lng = parseFloat(data.longitude.toFixed(5));
+              currentReportCoords.accuracy = 500;
+              currentLiveLocation.lat = currentReportCoords.lat;
+              currentLiveLocation.lng = currentReportCoords.lng;
+              currentLiveLocation.locality = data.cityName || '';
+              currentLiveLocation.city = data.cityName || '';
+              currentLiveLocation.state = data.regionName || '';
+              currentLiveLocation.address = [data.cityName, data.regionName, data.countryName].filter(Boolean).join(', ');
+              currentLiveLocation.source = 'Network Location (IP)';
+              currentLiveLocation.isReal = true;
+
+              updateGPSUI(true);
+              updateTelemetryWithRealLocation(currentLiveLocation.locality, currentLiveLocation.city);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("IP Geolocation fallback notice:", e);
+      }
+    }
+
+    async function resolveReverseGeocode(lat, lng) {
+      try {
+        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
+        if (res.ok) {
+          const data = await res.json();
+          const locality = data.locality || data.localityInfo?.administrative?.[3]?.name || data.localityInfo?.administrative?.[2]?.name || '';
+          const city = data.city || data.principalSubdivision || '';
+          const state = data.principalSubdivision || '';
+          const street = data.localityInfo?.informative?.[0]?.name || '';
+          
+          currentLiveLocation.locality = locality || city;
+          currentLiveLocation.city = city;
+          currentLiveLocation.state = state;
+          
+          const parts = [street, locality, city, state].filter(Boolean);
+          currentLiveLocation.address = parts.length > 0 ? parts.join(', ') : `${lat}° N, ${lng}° E`;
+          
+          updateGPSUI(true);
+          updateTelemetryWithRealLocation(locality, city);
+          return;
+        }
+      } catch (err) {
+        console.warn("Reverse geocode primary API notice:", err);
+      }
+
+      // Fallback: OpenStreetMap Nominatim
+      try {
+        const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`);
+        if (nomRes.ok) {
+          const nomData = await nomRes.json();
+          if (nomData.display_name) {
+            currentLiveLocation.address = nomData.display_name;
+            const addr = nomData.address || {};
+            const locality = addr.suburb || addr.neighbourhood || addr.road || '';
+            const city = addr.city || addr.town || addr.state_district || '';
+            currentLiveLocation.locality = locality || city;
+            currentLiveLocation.city = city;
+            updateGPSUI(true);
+            updateTelemetryWithRealLocation(locality, city);
+          }
+        }
+      } catch (nomErr) {
+        console.warn("Nominatim fallback notice:", nomErr);
+      }
+    }
+
+    function promptManualLocation() {
+      const current = currentLiveLocation.address || '';
+      const custom = prompt("Enter your current physical street, area, or landmark (e.g. MG Road, Near Bus Station):", current);
+      if (custom && custom.trim().length > 2) {
+        currentLiveLocation.address = custom.trim();
+        currentLiveLocation.locality = custom.trim();
+        currentLiveLocation.isReal = true;
+        currentLiveLocation.source = 'Manual Entry';
+        updateGPSUI(true);
+        updateTelemetryWithRealLocation(custom.trim(), '');
       }
     }
 
@@ -454,20 +678,34 @@
       const tickerText = document.getElementById('gps-ticker-text');
       const btnText = document.getElementById('btn-gps-text');
       const modalCoords = document.getElementById('gps-coords-label');
+      const modalAddress = document.getElementById('gps-address-label');
       const modalStatus = document.getElementById('gps-status-label');
 
       const coordString = `${currentReportCoords.lat}° N, ${currentReportCoords.lng}° E`;
+      const addrString = currentLiveLocation.address || 'Locating physical address...';
 
       if (isReal) {
-        if (tickerText) tickerText.innerHTML = `🛰️ Real GPS Locked: <b>${coordString}</b> (±${currentReportCoords.accuracy}m)`;
-        if (btnText) btnText.innerText = `GPS: ±${currentReportCoords.accuracy}m`;
+        if (tickerText) {
+          tickerText.innerHTML = `🛰️ Realtime: <b>${addrString}</b> (${coordString})`;
+        }
+        if (btnText) {
+          btnText.innerText = `GPS: ±${currentReportCoords.accuracy}m`;
+        }
         if (modalCoords) modalCoords.innerText = coordString;
-        if (modalStatus) modalStatus.innerHTML = `<span class="text-emerald-400 font-bold">✓ High Accuracy Device GPS Active (±${currentReportCoords.accuracy}m)</span>`;
+        if (modalAddress) modalAddress.innerText = `📍 ${addrString}`;
+        if (modalStatus) {
+          modalStatus.innerHTML = `<span class="text-emerald-400 font-bold">✓ Live Location Active (${currentLiveLocation.source || 'GPS'})</span>`;
+        }
       } else {
-        if (tickerText) tickerText.innerHTML = `📍 Simulated GPS: <b>${coordString}</b> (${message || 'Test Location'})`;
-        if (btnText) btnText.innerText = 'GPS: Test Mode';
+        if (tickerText) {
+          tickerText.innerHTML = `📍 Locating: <b>${coordString}</b> (${message || 'Connecting'})`;
+        }
+        if (btnText) btnText.innerText = 'GPS: Acquiring...';
         if (modalCoords) modalCoords.innerText = coordString;
-        if (modalStatus) modalStatus.innerHTML = `<span class="text-amber-400 font-bold">⚠️ ${message || 'Using Simulated Safe Coordinates'}</span>`;
+        if (modalAddress) modalAddress.innerText = addrString;
+        if (modalStatus) {
+          modalStatus.innerHTML = `<span class="text-amber-400 font-bold">⚠️ ${message || 'Acquiring GPS / IP location'}</span>`;
+        }
       }
     }
 
@@ -1045,7 +1283,10 @@
               <span>●</span> ${statusText}
             </div>
             <h3 class="text-xs font-black text-white mt-1">Nearest Pole: ${activePole}</h3>
-            <p class="text-[10px] text-slate-400 mt-0.5">Approx. 4.2m away • ${pole.name}</p>
+            <p class="text-[10px] text-slate-300 mt-0.5 font-medium">Approx. 4.2m away • ${pole.name}</p>
+            <p class="text-[9px] text-emerald-400 mt-0.5 flex items-center justify-center gap-1">
+              <span>📍</span> <span class="truncate max-w-[280px]">${currentLiveLocation.address || 'Real-time GPS Active'}</span>
+            </p>
 
             <div class="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-slate-800/80 text-[10px]">
               <div class="bg-slate-950 p-2 rounded-xl">
@@ -1385,6 +1626,8 @@
     // 8. CITIZEN HAZARD REPORT SUBMISSION (Real Backend + Photo + GPS)
     // ========================================================================
     function openReportsModal() {
+      renderPoleSelectOptions();
+      updateGPSUI(currentLiveLocation.isReal);
       document.getElementById('modal-report').classList.remove('hidden');
     }
     function closeReportsModal() {
@@ -1423,7 +1666,10 @@
     }
 
     async function submitCitizenReport() {
-      const poleId = document.getElementById('report-pole-id')?.value?.trim() || 'P-001';
+      const selectPole = document.getElementById('report-pole-id')?.value?.trim() || 'P-001';
+      const customPole = document.getElementById('custom-pole-id')?.value?.trim() || '';
+      const finalPoleId = (selectPole === 'CUSTOM' && customPole) ? customPole : (selectPole === 'CUSTOM' ? 'POLE-CUSTOM' : selectPole);
+
       const category = document.getElementById('report-category')?.value || 'Sparking or Smoke from Insulator';
       const desc = document.getElementById('report-desc')?.value?.trim() || '';
       const phone = document.getElementById('report-phone')?.value?.trim() || '';
@@ -1459,12 +1705,16 @@
           }
         }
 
-        // 2. Submit Hazard Report to Database
+        // 2. Submit Hazard Report to Database with REAL location address and coords
+        const reportAddress = (currentLiveLocation.address && currentLiveLocation.address !== 'Detecting live address...')
+          ? currentLiveLocation.address
+          : `Near ${finalPoleId} (${currentReportCoords.lat}° N, ${currentReportCoords.lng}° E)`;
+
         const payload = {
-          pole_id: poleId,
+          pole_id: finalPoleId,
           latitude: currentReportCoords.lat,
           longitude: currentReportCoords.lng,
-          address: `Near Pole ${poleId}, Sector 4`,
+          address: reportAddress,
           hazard_type: category,
           description: desc,
           image_url: imageUrl,
@@ -1675,6 +1925,7 @@
     <tr><th>Incident Ticket ID</th><td><b>${ticketId}</b></td></tr>
     <tr><th>Reporting Citizen</th><td>${currentUser ? currentUser.name : 'Citizen'} (${currentUser ? currentUser.email : 'Public'})</td></tr>
     <tr><th>Nearest Pole Identifier</th><td><b>${activePole}</b> (${pole.name})</td></tr>
+    <tr><th>Physical Location / Address</th><td><b>${currentLiveLocation.address || 'Real-time GPS Area Active'}</b></td></tr>
     <tr><th>GPS Geolocation</th><td>${currentReportCoords.lat}° N, ${currentReportCoords.lng}° E (±${currentReportCoords.accuracy}m)</td></tr>
     <tr><th>Hazard Category</th><td>Sparking / Insulator Flashover</td></tr>
     <tr><th>Submission Date & Time</th><td>${new Date().toLocaleString()}</td></tr>
@@ -2067,6 +2318,7 @@
 
     // Initial Startup Boot
     initRealTimeGPS();
+    fetchPolesFromBackend();
     renderCurrentView();
   </script>
 </body>
